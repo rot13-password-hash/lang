@@ -4,6 +4,9 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
+  "/home/runner/lang/src/compiler/code_gen/code_gen.cpp" "/home/runner/lang/build/CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.o"
+  "/home/runner/lang/src/compiler/lexer/lexer.cpp" "/home/runner/lang/build/CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.o"
+  "/home/runner/lang/src/compiler/parser/parser.cpp" "/home/runner/lang/build/CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.o"
   "/home/runner/lang/src/main.cpp" "/home/runner/lang/build/CMakeFiles/lang.dir/src/main.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")

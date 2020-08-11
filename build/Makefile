@@ -123,6 +123,87 @@ lang/fast:
 	$(MAKE) -f CMakeFiles/lang.dir/build.make CMakeFiles/lang.dir/build
 .PHONY : lang/fast
 
+src/compiler/code_gen/code_gen.o: src/compiler/code_gen/code_gen.cpp.o
+
+.PHONY : src/compiler/code_gen/code_gen.o
+
+# target to build an object file
+src/compiler/code_gen/code_gen.cpp.o:
+	$(MAKE) -f CMakeFiles/lang.dir/build.make CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.o
+.PHONY : src/compiler/code_gen/code_gen.cpp.o
+
+src/compiler/code_gen/code_gen.i: src/compiler/code_gen/code_gen.cpp.i
+
+.PHONY : src/compiler/code_gen/code_gen.i
+
+# target to preprocess a source file
+src/compiler/code_gen/code_gen.cpp.i:
+	$(MAKE) -f CMakeFiles/lang.dir/build.make CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.i
+.PHONY : src/compiler/code_gen/code_gen.cpp.i
+
+src/compiler/code_gen/code_gen.s: src/compiler/code_gen/code_gen.cpp.s
+
+.PHONY : src/compiler/code_gen/code_gen.s
+
+# target to generate assembly for a file
+src/compiler/code_gen/code_gen.cpp.s:
+	$(MAKE) -f CMakeFiles/lang.dir/build.make CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.s
+.PHONY : src/compiler/code_gen/code_gen.cpp.s
+
+src/compiler/lexer/lexer.o: src/compiler/lexer/lexer.cpp.o
+
+.PHONY : src/compiler/lexer/lexer.o
+
+# target to build an object file
+src/compiler/lexer/lexer.cpp.o:
+	$(MAKE) -f CMakeFiles/lang.dir/build.make CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.o
+.PHONY : src/compiler/lexer/lexer.cpp.o
+
+src/compiler/lexer/lexer.i: src/compiler/lexer/lexer.cpp.i
+
+.PHONY : src/compiler/lexer/lexer.i
+
+# target to preprocess a source file
+src/compiler/lexer/lexer.cpp.i:
+	$(MAKE) -f CMakeFiles/lang.dir/build.make CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.i
+.PHONY : src/compiler/lexer/lexer.cpp.i
+
+src/compiler/lexer/lexer.s: src/compiler/lexer/lexer.cpp.s
+
+.PHONY : src/compiler/lexer/lexer.s
+
+# target to generate assembly for a file
+src/compiler/lexer/lexer.cpp.s:
+	$(MAKE) -f CMakeFiles/lang.dir/build.make CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.s
+.PHONY : src/compiler/lexer/lexer.cpp.s
+
+src/compiler/parser/parser.o: src/compiler/parser/parser.cpp.o
+
+.PHONY : src/compiler/parser/parser.o
+
+# target to build an object file
+src/compiler/parser/parser.cpp.o:
+	$(MAKE) -f CMakeFiles/lang.dir/build.make CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.o
+.PHONY : src/compiler/parser/parser.cpp.o
+
+src/compiler/parser/parser.i: src/compiler/parser/parser.cpp.i
+
+.PHONY : src/compiler/parser/parser.i
+
+# target to preprocess a source file
+src/compiler/parser/parser.cpp.i:
+	$(MAKE) -f CMakeFiles/lang.dir/build.make CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.i
+.PHONY : src/compiler/parser/parser.cpp.i
+
+src/compiler/parser/parser.s: src/compiler/parser/parser.cpp.s
+
+.PHONY : src/compiler/parser/parser.s
+
+# target to generate assembly for a file
+src/compiler/parser/parser.cpp.s:
+	$(MAKE) -f CMakeFiles/lang.dir/build.make CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.s
+.PHONY : src/compiler/parser/parser.cpp.s
+
 src/main.o: src/main.cpp.o
 
 .PHONY : src/main.o
@@ -159,6 +240,15 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... lang"
 	@echo "... edit_cache"
+	@echo "... src/compiler/code_gen/code_gen.o"
+	@echo "... src/compiler/code_gen/code_gen.i"
+	@echo "... src/compiler/code_gen/code_gen.s"
+	@echo "... src/compiler/lexer/lexer.o"
+	@echo "... src/compiler/lexer/lexer.i"
+	@echo "... src/compiler/lexer/lexer.s"
+	@echo "... src/compiler/parser/parser.o"
+	@echo "... src/compiler/parser/parser.i"
+	@echo "... src/compiler/parser/parser.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"

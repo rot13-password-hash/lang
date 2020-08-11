@@ -81,17 +81,95 @@ CMakeFiles/lang.dir/src/main.cpp.o.provides: CMakeFiles/lang.dir/src/main.cpp.o.
 CMakeFiles/lang.dir/src/main.cpp.o.provides.build: CMakeFiles/lang.dir/src/main.cpp.o
 
 
+CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.o: CMakeFiles/lang.dir/flags.make
+CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.o: ../src/compiler/lexer/lexer.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/runner/lang/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.o -c /home/runner/lang/src/compiler/lexer/lexer.cpp
+
+CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/runner/lang/src/compiler/lexer/lexer.cpp > CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.i
+
+CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/runner/lang/src/compiler/lexer/lexer.cpp -o CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.s
+
+CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.o.requires:
+
+.PHONY : CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.o.requires
+
+CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.o.provides: CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.o.requires
+	$(MAKE) -f CMakeFiles/lang.dir/build.make CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.o.provides.build
+.PHONY : CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.o.provides
+
+CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.o.provides.build: CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.o
+
+
+CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.o: CMakeFiles/lang.dir/flags.make
+CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.o: ../src/compiler/parser/parser.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/runner/lang/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.o -c /home/runner/lang/src/compiler/parser/parser.cpp
+
+CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/runner/lang/src/compiler/parser/parser.cpp > CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.i
+
+CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/runner/lang/src/compiler/parser/parser.cpp -o CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.s
+
+CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.o.requires:
+
+.PHONY : CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.o.requires
+
+CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.o.provides: CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.o.requires
+	$(MAKE) -f CMakeFiles/lang.dir/build.make CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.o.provides.build
+.PHONY : CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.o.provides
+
+CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.o.provides.build: CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.o
+
+
+CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.o: CMakeFiles/lang.dir/flags.make
+CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.o: ../src/compiler/code_gen/code_gen.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/runner/lang/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.o -c /home/runner/lang/src/compiler/code_gen/code_gen.cpp
+
+CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/runner/lang/src/compiler/code_gen/code_gen.cpp > CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.i
+
+CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/runner/lang/src/compiler/code_gen/code_gen.cpp -o CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.s
+
+CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.o.requires:
+
+.PHONY : CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.o.requires
+
+CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.o.provides: CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.o.requires
+	$(MAKE) -f CMakeFiles/lang.dir/build.make CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.o.provides.build
+.PHONY : CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.o.provides
+
+CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.o.provides.build: CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.o
+
+
 # Object files for target lang
 lang_OBJECTS = \
-"CMakeFiles/lang.dir/src/main.cpp.o"
+"CMakeFiles/lang.dir/src/main.cpp.o" \
+"CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.o" \
+"CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.o" \
+"CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.o"
 
 # External object files for target lang
 lang_EXTERNAL_OBJECTS =
 
 lang: CMakeFiles/lang.dir/src/main.cpp.o
+lang: CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.o
+lang: CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.o
+lang: CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.o
 lang: CMakeFiles/lang.dir/build.make
 lang: CMakeFiles/lang.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/runner/lang/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable lang"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/runner/lang/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking CXX executable lang"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/lang.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -100,6 +178,9 @@ CMakeFiles/lang.dir/build: lang
 .PHONY : CMakeFiles/lang.dir/build
 
 CMakeFiles/lang.dir/requires: CMakeFiles/lang.dir/src/main.cpp.o.requires
+CMakeFiles/lang.dir/requires: CMakeFiles/lang.dir/src/compiler/lexer/lexer.cpp.o.requires
+CMakeFiles/lang.dir/requires: CMakeFiles/lang.dir/src/compiler/parser/parser.cpp.o.requires
+CMakeFiles/lang.dir/requires: CMakeFiles/lang.dir/src/compiler/code_gen/code_gen.cpp.o.requires
 
 .PHONY : CMakeFiles/lang.dir/requires
 

@@ -1,1 +1,1 @@
-run = "mkdir -p build && cd build && cmake .. && make && ./lang"
+run = "clear && mkdir -p build && cd build && cmake .. && make && ./lang"
