@@ -6,63 +6,63 @@
 
 namespace lang::compiler::lexer
 {
-    struct lexeme
-    {
-        enum class lexeme_type
-        {
-            eof,
+	struct lexeme
+	{
+		enum class lexeme_type
+		{
+			eof,
 
-            reserved_and,
-            reserved_break,
-            reserved_do,
-            reserved_else,
-            reserved_elseif,
-            reserved_end,
-            reserved_false,
-            reserved_for,
-            reserved_function,
-            reserved_if,
-            reserved_in,
-            reserved_local,
-            reserved_nil,
-            reserved_not,
-            reserved_or,
-            reserved_repeat,
-            reserved_return,
-            reserved_then,
-            reserved_true,
-            reserved_until,
-            reserved_while,
+			reserved_and,
+			reserved_break,
+			reserved_do,
+			reserved_else,
+			reserved_elseif,
+			reserved_end,
+			reserved_false,
+			reserved_for,
+			reserved_function,
+			reserved_if,
+			reserved_in,
+			reserved_local,
+			reserved_nil,
+			reserved_not,
+			reserved_or,
+			reserved_repeat,
+			reserved_return,
+			reserved_then,
+			reserved_true,
+			reserved_until,
+			reserved_while,
 
-            name,
-            number,
-            string,
+			name,
+			number,
+			string,
 
-            open_parenthesis,
-            close_parenthesis,
-            open_bracket,
-            close_bracket,
-            open_brace,
-            close_brace
-        };
+			open_parenthesis,
+			close_parenthesis,
+			open_bracket,
+			close_bracket,
+			open_brace,
+			close_brace
+		};
 
-        lexeme_type type = lexeme_type::eof;
+		lexeme_type type = lexeme_type::eof;
 
 
-        std::variant<std::string_view, double> value;
+		std::variant<std::string_view, double> value;
 
-        std::size_t line = 0;
-        std::size_t col = 0;
+		std::size_t line = 0;
+		std::size_t col = 0;
 
-        static std::string to_string(lexeme_type type)
-        {
-            switch (type)
-            {
-            case lexeme_type::eof:
-            {
-                return "<eof>";
-            }
-            case lexeme_type::reserved_and:
+		static std::string to_string(lexeme_type type)
+		{
+			switch (type)
+			{
+			case lexeme_type::eof:
+			{
+				return "<eof>";
+			}
+			case lexeme_type::reserved_and:
 			{
 				return "'and'";
 			}
@@ -146,40 +146,40 @@ namespace lang::compiler::lexer
 			{
 				return "'while'";
 			}
-            case lexeme_type::name:
-            {
-                return "<name>";
-            }
-            case lexeme_type::string:
-            {
-                return "<string>";
-            }
-            default:
-            {
-                return "<unknown>";
-            }
-            }
-        }
+			case lexeme_type::name:
+			{
+				return "<name>";
+			}
+			case lexeme_type::string:
+			{
+				return "<string>";
+			}
+			default:
+			{
+				return "<unknown>";
+			}
+			}
+		}
 
-        std::string to_string()
-        {
-            switch (type)
-            {
-            case lexeme_type::name:
-            {
-                const auto& view = std::get<std::string_view>(value);
-                return { view.cbegin(), view.cend() };
-            }
-            case lexeme_type::string:
-            {
-                const auto& view = std::get<std::string_view>(value);
-                return '"' + std::string{ view.cbegin(), view.cend() } + '"';
-            }
-            default:
-            {
-                return to_string(type);
-            }
-            }
-        }
-    };
+		std::string to_string()
+		{
+			switch (type)
+			{
+			case lexeme_type::name:
+			{
+				const auto& view = std::get<std::string_view>(value);
+				return { view.cbegin(), view.cend() };
+			}
+			case lexeme_type::string:
+			{
+				const auto& view = std::get<std::string_view>(value);
+				return '"' + std::string{ view.cbegin(), view.cend() } +'"';
+			}
+			default:
+			{
+				return to_string(type);
+			}
+			}
+		}
+	};
 }

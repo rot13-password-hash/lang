@@ -2,9 +2,9 @@
 
 namespace lang::compiler::code_gen
 {
-    class code_gen
-    {
-    public:
-        code_gen()
-    }
+	class code_gen
+	{
+	public:
+		code_gen()
+	}
 }
