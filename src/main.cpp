@@ -13,7 +13,7 @@ int main() {
 
     /*
     lexer::lexer lexer{ source };
-
+ 
     while (true)
     {
         std::cout << lexer.next().to_string() << '\n';
