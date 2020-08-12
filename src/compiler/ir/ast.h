@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <utility>
+#include <string>
 
 namespace lang::compiler::ir::ast
 {
@@ -26,6 +27,14 @@ namespace lang::compiler::ir::ast
 
 	namespace statement
 	{
+		struct klass
+		{
+			std::string name;
+
+			klass(std::string name) :
+				name(std::move(name)) {}
+		};
+
 		struct block : node
 		{
 			block(position_range range) :
