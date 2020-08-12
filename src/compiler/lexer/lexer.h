@@ -14,18 +14,27 @@ namespace lang::compiler::lexer
 		std::string_view source;
 
 		std::size_t read_offset = 0;
-		std::size_t line = 0;
-		std::size_t column = 0;
+		std::size_t line = 1;
+		std::size_t column = 1;
 
+		lexeme current;
+
+		
 		char peek_character(std::size_t offset = 0) const;
 		void consume_character();
 
-		void skip_comment(bool long_comment = false);
+		void skip_comment();
+		void lex_string();
+		void lex_keyword_or_id();
+		void lex_symbol();
 	public:
 		explicit lexer(const std::string_view& source);
-		
-		const lexeme& current_lexeme();
+
+		lexeme& current_lexeme() { return current; }
 		const lexeme& next_lexeme();
+		
+		[[nodiscard]] std::size_t get_line() const { return line; }
+		[[nodiscard]] std::size_t get_column() const { return column; }
 	};
 	
 	class lexer_
