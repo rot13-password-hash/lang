@@ -20,18 +20,19 @@ namespace lang::compiler::ir::ast
 	struct node
 	{
 		position_range range;
+
 	protected:
 		node(position_range range) :
-			range(std::move(range)) {}
+			range(range) {}
 	};
 
 	namespace statement
 	{
-		struct klass
+		struct type
 		{
 			std::string name;
 
-			klass(std::string name) :
+			type(std::string name) :
 				name(std::move(name)) {}
 		};
 
