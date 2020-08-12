@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../ir/ast.h"
 
 namespace lang::compiler::code_gen
@@ -5,6 +7,6 @@ namespace lang::compiler::code_gen
 	class code_gen
 	{
 	public:
-		code_gen()
-	}
+		//code_gen()
+	};
 }
