@@ -1,5 +1,6 @@
 #include "compiler/lexer/lexer.h"
 #include "compiler/parser/parser.h"
+#include "compiler/utils/exception.h"
 
 #include <iostream>
 #include <memory>
@@ -8,8 +9,10 @@ using namespace lang::compiler;
 
 int main() {
     std::string source = R"s(
-    print'hi'
-    )s";
+type a = i32
+type b = i64
+type c = i128
+)s";
 
     /*
     lexer::lexer lexer{ source };
@@ -23,6 +26,13 @@ int main() {
         }
     }*/
 
-    parser::parser parser{ source };
-    parser.parse();
+	try
+	{
+		parser::parser parser{ source };
+		parser.parse();
+	}
+	catch (const exception& ex)
+	{
+		std::cout << ex.pos.line << ':' << ex.pos.col << ": " << ex.what() << std::endl;
+	}
 }

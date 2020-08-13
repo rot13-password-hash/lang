@@ -1,6 +1,8 @@
 #include "lexer.h"
+#include "../utils/exception.h"
 
-#include <map>
+#include <unordered_map>
+#include <iostream>
 
 namespace lang::compiler::lexer
 {
@@ -18,24 +20,47 @@ namespace lang::compiler::lexer
 	{
 		return value != '_' && !std::isupper(value);
 	}
+
+	using lexeme_map_t = std::unordered_map<std::string_view, lexeme::lexeme_type>;
 	
-	const std::map<std::string, lexeme::lexeme_type> symbol_map
+	const lexeme_map_t symbol_map
 	{
 		{ "+", lexeme::lexeme_type::symb_add },
 		{ "+=", lexeme::lexeme_type::symb_add_assign },
 		{ "-", lexeme::lexeme_type::symb_minus },
 		{ "-=", lexeme::lexeme_type::symb_minus_assign },
+		{ "*", lexeme::lexeme_type::symb_multiply },
+		{ "*=", lexeme::lexeme_type::symb_multiply_assign },
+		{ "(", lexeme::lexeme_type::symb_open_parenthesis },
+		{ ")", lexeme::lexeme_type::symb_close_parenthesis },
+		{ "[", lexeme::lexeme_type::symb_open_bracket },
+		{ "]", lexeme::lexeme_type::symb_close_bracket },
+		{ "{", lexeme::lexeme_type::symb_open_brace },
+		{ "}", lexeme::lexeme_type::symb_close_brace },
+		{ "->", lexeme::lexeme_type::symb_arrow },
+		{ "=", lexeme::lexeme_type::symb_equals },
+		{ "?", lexeme::lexeme_type::symb_question },
+		{ ":", lexeme::lexeme_type::symb_colon }
 	};
 
-	const std::map<std::string, lexeme::lexeme_type> keyword_map
+	const lexeme_map_t keyword_map
 	{
-		{ "fn", lexeme::lexeme_type::kw_function },
+		{ "fn", lexeme::lexeme_type::kw_fn },
 		{ "type", lexeme::lexeme_type::kw_type },
+		{ "try", lexeme::lexeme_type::kw_try },
+		{ "catch", lexeme::lexeme_type::kw_catch },
+		{ "switch", lexeme::lexeme_type::kw_switch },
+		{ "throw", lexeme::lexeme_type::kw_throw }
 	};
-	
-	char lexer::peek_character(const std::size_t offset) const
+
+	position lexer::current_position() const
 	{
-		return read_offset + offset >= source.length() ? eof : source[read_offset + offset];
+		return { line, read_offset - line_start_offset };
+	}
+	
+	char lexer::peek_character(std::size_t offset) const
+	{
+		return read_offset + offset >= source.length() ? eof_char : source[read_offset + offset];
 	}
 
 	void lexer::consume_character()
@@ -43,9 +68,18 @@ namespace lang::compiler::lexer
 		if (peek_character() == '\n')
 		{
 			++line;
+			line_start_offset = read_offset;
 		}
-		++column;
 		++read_offset;
+	}
+
+	void lexer::skip_whitespace()
+	{
+		char next_char;
+		while ((next_char = peek_character()) != eof_char && std::isspace(next_char))
+		{
+			consume_character();
+		}
 	}
 
 	void lexer::skip_comment()
@@ -72,36 +106,33 @@ namespace lang::compiler::lexer
 
 	void lexer::lex_string()
 	{
-		std::string value;
-		
+		current.type = lexeme::lexeme_type::string_literal;
+
+		std::size_t start_offset = read_offset;
 		while (true)
 		{
-			if (peek_character() == '"')
+			if (peek_character() == '\\' && peek_character(1) == '"')
 			{
 				consume_character();
-				break;
+				consume_character();
+				continue;
 			}
-
-			if (peek_character() == '\n')
+			else if (peek_character() == '"')
 			{
-				// Error: Unterminated String Literal
-				break;
+				current.value = source.substr(start_offset, read_offset - start_offset);
+				consume_character();
+				return;
 			}
 			
-			value += peek_character();
 			consume_character();
 		}
-		
-		current.type = lexeme::lexeme_type::string_literal;
-		current.value = value;
 	}
 
 	void lexer::lex_keyword_or_id()
 	{
 		auto can_be_keyword = is_keyword_char(peek_character());
-		std::string value;
-
-		value += peek_character();
+		
+		const auto start_offset = read_offset;
 		consume_character();
 		
 		while (true)
@@ -115,82 +146,110 @@ namespace lang::compiler::lexer
 			
 			if (!is_identifier_char(next_char))
 			{
-				current = {
-					lexeme::lexeme_type::identifier,
-					value
-				};
+				current.type = lexeme::lexeme_type::identifier;
+				current.value = source.substr(start_offset, read_offset - start_offset);
 				break;
 			}
-			
-			value += next_char;
+
 			consume_character();
 		}
 
 		if (can_be_keyword)
 		{
-			if (const auto keyword_type = keyword_map.find(value); keyword_type != keyword_map.end())
+			if (const auto keyword_type = keyword_map.find(source.substr(start_offset, read_offset - start_offset)); keyword_type != keyword_map.cend())
 			{
 				current.type = keyword_type->second;
-
-				if (current.type == lexeme::lexeme_type::kw_type)
-				{
-					std::string type_name;
-
-					if (!std::isspace(peek_character()))
-					{
-						return; // error: bad parse
-					}
-					consume_character();
-					
-					while (true)
-					{
-						if (type_name.length() == 0 && !is_start_identifier_char(peek_character()))
-						{
-							return; // error: identifier cannot 
-						}
-
-						if (!is_identifier_char(peek_character()))
-						{
-							consume_character();
-							break;
-						}
-
-						type_name += peek_character();
-						consume_character();
-					}
-
-					current.value = type_name;
-				}
 			}
 		}
 	}
 
 	void lexer::lex_symbol()
 	{
-		std::string long_symbol;
-		long_symbol += peek_character();
+		// TODO: REWRITE THIS TRASH
+		auto start_offset = read_offset;
 
 		consume_character();
-		if (const auto symbol = symbol_map.find(long_symbol + peek_character(1)); symbol != symbol_map.end())
+		lexeme_map_t::const_iterator symbol;
+		if (peek_character(1) != eof_char && (symbol = symbol_map.find(source.substr(start_offset, 2))) != symbol_map.cend())
 		{
 			consume_character();
 			current.type = symbol->second;
 		}
-		else if (const auto symbol = symbol_map.find(long_symbol); symbol != symbol_map.end())
+		else if (symbol = symbol_map.find(source.substr(start_offset, 1)); symbol != symbol_map.cend())
 		{
 			current.type = symbol->second;
 		}
+		else
+		{
+			throw compiler::exception{
+				current_position(),
+				"unknown symbol"
+			};
+		}
+	}
+
+	void lexer::lex_number_literal()
+	{
+		const auto is_hex = peek_character() == '0' && peek_character(1) == 'x';
+		auto is_float = false;
+
+		const auto start_offset = read_offset;
+
+		if (is_hex)
+		{
+			consume_character();
+			consume_character(); // consume 0x
+		}
+
+		while (true)
+		{
+			if (peek_character() == '.')
+			{
+				is_float = true;
+				consume_character();
+			}
+			
+			if (is_hex && is_float)
+			{
+				throw compiler::exception {
+					current_position(),
+					"malformed number"
+				}; 
+			}
+
+			auto next_char = peek_character();
+			if ((is_hex ? std::isxdigit(next_char) : std::isdigit(next_char)) || next_char == '_')
+			{
+				consume_character();
+				next_char = peek_character();
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		current.value = source.substr(start_offset, read_offset - start_offset);
+		current.type = lexeme::lexeme_type::number_literal;
 	}
 
 	
 	lexer::lexer(const std::string_view& source)
 		: source(source) {}
 
-	const lexeme& lexer::next_lexeme()
+	void lexer::next_lexeme()
 	{
-		current.value = std::monostate(); // clear every time to be safe
+		skip_whitespace();
+
+		current.pos = current_position();
+
 		switch (peek_character())
 		{
+			case eof_char:
+			{
+				current.type = lexeme::lexeme_type::eof;
+				return;
+			}
 			case '/':
 			{
 				consume_character();
@@ -200,29 +259,27 @@ namespace lang::compiler::lexer
 				if (next_character == '/')
 				{
 					consume_character();
-					skip_comment(); // if next_character is asterisk, then it's a long comment
+					skip_comment();
 					return next_lexeme();
 				}
 
-					
 				if (next_character == '=')
 				{
-					current = {
-						lexeme::lexeme_type::symb_divide_assign
-					};
+					consume_character();
+					current.type = lexeme::lexeme_type::symb_divide_assign;
 				}
 				else
 				{
-					current = {
-						lexeme::lexeme_type::symb_divide
-					};
+					current.type = lexeme::lexeme_type::symb_divide;
 				}
+
+				return;
 			}
 			case '"':
 			{
 				consume_character();
 				lex_string();
-				break;
+				return;
 			}
 			default:
 			{
@@ -230,18 +287,18 @@ namespace lang::compiler::lexer
 				if (is_start_identifier_char(peek_character())) // must be keyword or identifier
 				{
 					lex_keyword_or_id();
-					break;
+					return;
 				}
 
-				if (std::ispunct(peek_character())) // must be a symbol
+				if (std::isdigit(peek_character()))
 				{
-					break;
+					lex_number_literal();					
+					return;
 				}
-				// Unknown Symbol
-				return; // error
+
+				lex_symbol();
 			}
 		}
-		return current;
 	}
 
 }

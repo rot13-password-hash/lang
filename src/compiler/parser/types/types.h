@@ -7,7 +7,7 @@
 
 namespace lang::compiler::parser
 {
-	class type_desc
+	struct type_desc
 	{
 		std::string name;
 
@@ -16,11 +16,34 @@ namespace lang::compiler::parser
 			return false;
 		}
 
+		virtual bool is_function_type() const
+		{
+			return false;
+		}
+
+		virtual bool is_alias_type() const
+		{
+			return false;
+		}
+
 	protected:
 		type_desc(std::string name) :
-			name(std::move(name)) {}
+			name(std::move(name))
+		{}
+	};
 
-		type_desc() {}
+	struct type_alias_desc : public type_desc
+	{
+		std::weak_ptr<type_desc> desc;
+
+		bool is_alias_type() const override
+		{
+			return true;
+		}
+
+		type_alias_desc(std::string name, const std::shared_ptr<type_desc>& desc) : type_desc(std::move(name)),
+			desc(desc)
+		{}
 	};
 
 	template <typename Type>
@@ -29,7 +52,7 @@ namespace lang::compiler::parser
 		using value_type = Type;
 
 	public:
-		bool is_built_in() const
+		bool is_built_in() const override
 		{
 			return true;
 		}
@@ -38,6 +61,7 @@ namespace lang::compiler::parser
 		{}
 	};
 
+	using void_t = built_in_type_desc<void>;
 	using i32_t = built_in_type_desc<std::int32_t>;
 	using u32_t = built_in_type_desc<std::uint32_t>;
 	using i64_t = built_in_type_desc<std::int64_t>;
@@ -50,15 +74,26 @@ namespace lang::compiler::parser
 	struct field
 	{
 		std::string name;
-		std::string type;
+		std::shared_ptr<type_desc> type;
 	};
 
-	class user_defined_type_desc : type_desc
+	class user_defined_type_desc : public type_desc
 	{
 		std::vector<field> fields;
+	};
 
-	public:
-		user_defined_type_desc(std::string name) : type_desc(std::move(name))
-		{}	
+	struct function_signature
+	{
+
+	};
+
+	class function_type : type_desc
+	{
+		function_signature signature;
+
+		bool is_function_type() const override
+		{
+			return true;
+		}
 	};
 }

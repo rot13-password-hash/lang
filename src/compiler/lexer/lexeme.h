@@ -4,38 +4,57 @@
 #include <string>
 #include <variant>
 
+#include "../utils/position.h"
+
 namespace lang::compiler::lexer
 {
 	struct lexeme
-	{		
+	{
 		enum class lexeme_type
 		{
 			eof,
 			identifier,
 			
-			/* literals */
+			// literals
 			string_literal,
+			number_literal,
 
-			/* keywords */
-			kw_function,
-			kw_type,			
+			// keywords
+			kw_fn,
+			kw_type,
+			kw_try,
+			kw_catch,
+			kw_switch,
+			kw_throw,
 			
-			/* symbols */
+			// symbols
 			symb_add,
 			symb_add_assign,
 			symb_minus,
 			symb_minus_assign,
+			symb_multiply,
+			symb_multiply_assign,
 			symb_divide,
 			symb_divide_assign,
+			symb_arrow,
+			symb_equals,
+			symb_question,
+			symb_colon,
+
+			// symbol pairs
+			symb_open_parenthesis,
+			symb_close_parenthesis,
+			symb_open_bracket,
+			symb_close_bracket,
+			symb_open_brace,
+			symb_close_brace,
 		};
 		
 		lexeme_type type = lexeme_type::eof;
 
+		std::string_view value;
 
-		std::variant<std::monostate, std::string_view, double> value;
-
-		std::size_t line = 0;
-		std::size_t col = 0;
+        position pos{ 0, 0 };
 
 		static std::string to_string(lexeme_type type)
 		{
@@ -49,13 +68,29 @@ namespace lang::compiler::lexer
 				{
 					return "<identifier>";
 				}
-				case lexeme_type::kw_function:
+				case lexeme_type::kw_fn:
 				{
 					return "fn";
 				}
 				case lexeme_type::kw_type:
 				{
 					return "type";
+				}
+				case lexeme_type::kw_try:
+				{
+					return "try";
+				}
+				case lexeme_type::kw_catch:
+				{
+					return "catch";
+				}
+				case lexeme_type::kw_switch:
+				{
+					return "switch";
+				}
+				case lexeme_type::kw_throw:
+				{
+					return "throw";
 				}
 				case lexeme_type::string_literal:
 				{
@@ -77,6 +112,14 @@ namespace lang::compiler::lexer
 				{
 					return "-=";
 				}
+				case lexeme_type::symb_multiply:
+				{
+					return "*";
+				}
+				case lexeme_type::symb_multiply_assign:
+				{
+					return "*=";
+				}
 				case lexeme_type::symb_divide:
 				{
 					return "/";
@@ -85,6 +128,46 @@ namespace lang::compiler::lexer
 				{
 					return "/=";
 				}
+				case lexeme_type::symb_arrow:
+				{
+					return "->";
+				}
+				case lexeme_type::symb_equals:
+				{
+					return "=";
+				}
+				case lexeme_type::symb_question:
+				{
+					return "?";
+				}
+				case lexeme_type::symb_colon:
+				{
+					return ":";
+				}
+				case lexeme_type::symb_open_parenthesis:
+				{
+					return "(";
+				}
+				case lexeme_type::symb_close_parenthesis:
+				{
+					return ")";
+				}
+				case lexeme_type::symb_open_bracket:
+				{
+					return "[";
+				}
+				case lexeme_type::symb_close_bracket:
+				{
+					return "]";
+				}
+				case lexeme_type::symb_open_brace:
+				{
+					return "{";
+				}
+				case lexeme_type::symb_close_brace:
+				{
+					return "}";
+				}
 				default:
 				{
 					return "<unknown>";
@@ -92,19 +175,18 @@ namespace lang::compiler::lexer
 			}
 		}
 
-		std::string to_string()
+		std::string to_string() const
 		{
 			switch (type)
 			{
+				case lexeme_type::number_literal:
 				case lexeme_type::identifier:
 				{
-					const auto& view = std::get<std::string_view>(value);
-					return { view.cbegin(), view.cend() };
+					return { value.cbegin(), value.cend() };
 				}
 				case lexeme_type::string_literal:
 				{
-					const auto& view = std::get<std::string_view>(value);
-					return '"' + std::string{ view.cbegin(), view.cend() } +'"';
+					return '"' + std::string{ value.cbegin(), value.cend() } +'"';
 				}
 				default:
 				{

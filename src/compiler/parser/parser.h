@@ -2,6 +2,7 @@
 
 #include "../ir/ast.h"
 #include "../lexer/lexer.h"
+#include "../utils/position.h"
 
 #include "types/types.h"
 #include "types/value.h"
@@ -16,30 +17,22 @@ namespace lang::compiler::parser
 	{
 		lexer::lexer lexer;
 
-		std::unordered_map<std::string, std::unique_ptr<type_desc>> type_map;
+		void expect(lexer::lexeme::lexeme_type type, bool should_consume = false);
 
-		ir::ast::position current_position();
+		std::string parse_type();
+
+		std::vector<ir::ast::var> parse_var_list();
+		std::unique_ptr<ir::ast::statement::function_definition> parse_function_definition();
+		void parse_type_definition();
+
+		std::unique_ptr<ir::ast::statement::block> parse_block();
+		std::unique_ptr<ir::ast::statement::top_level_block> parse_block_global();
 
 	public:
-		template <class T>
-		void register_type(const std::string& name)
-		{
-			type_map[name] = std::make_unique<T>(name);
-		}
-
 		explicit parser(std::string_view source) :
 			lexer(source)
-		{
-			register_type<i32_t>("i32");
-			register_type<i64_t>("i64");
-			register_type<u32_t>("u32");
-			register_type<u64_t>("u64");
-			register_type<bool_t>("bool");
-			register_type<f32_t>("f32");
-			register_type<f64_t>("f64");
-			register_type<string_t>("string");
-		}
+		{}
 
-		std::unique_ptr<ir::ast::statement::block> parse();
+		std::unique_ptr<ir::ast::statement::top_level_block> parse();
 	};
 }
