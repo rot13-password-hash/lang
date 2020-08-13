@@ -46,6 +46,7 @@ namespace lang::compiler::lexer
 	const lexeme_map_t keyword_map
 	{
 		{ "fn", lexeme::lexeme_type::kw_fn },
+		{ "return", lexeme::lexeme_type::kw_return },
 		{ "type", lexeme::lexeme_type::kw_type },
 		{ "try", lexeme::lexeme_type::kw_try },
 		{ "catch", lexeme::lexeme_type::kw_catch },

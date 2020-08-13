@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <optional>
+#include <vector>
 
 #include "../utils/position.h"
 
@@ -127,6 +128,14 @@ namespace lang::compiler::ir::ast
 
 			top_level_block(position_range range, std::vector<std::unique_ptr<restricted_statement>> body) :
 				statement(range), body(std::move(body)) {}
+		};
+
+		struct ret : statement
+		{
+			std::unique_ptr<expression::expression> value;
+
+			ret(position_range range, std::unique_ptr<expression::expression> value) :
+				statement(range), value(std::move(value)) {}
 		};
 	}
 }

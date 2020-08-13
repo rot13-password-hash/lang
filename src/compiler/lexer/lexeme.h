@@ -21,6 +21,7 @@ namespace lang::compiler::lexer
 
 			// keywords
 			kw_fn,
+			kw_return,
 			kw_type,
 			kw_try,
 			kw_catch,
@@ -62,35 +63,39 @@ namespace lang::compiler::lexer
 			{
 				case lexeme_type::eof:
 				{
-					return "<eof>";
+					return "eof";
 				}
 				case lexeme_type::identifier:
 				{
-					return "<identifier>";
+					return "identifier";
 				}
 				case lexeme_type::kw_fn:
 				{
-					return "fn";
+					return "'fn'";
+				}
+				case lexeme_type::kw_return:
+				{
+					return "'return'";
 				}
 				case lexeme_type::kw_type:
 				{
-					return "type";
+					return "'type'";
 				}
 				case lexeme_type::kw_try:
 				{
-					return "try";
+					return "'try'";
 				}
 				case lexeme_type::kw_catch:
 				{
-					return "catch";
+					return "'catch'";
 				}
 				case lexeme_type::kw_switch:
 				{
-					return "switch";
+					return "'switch'";
 				}
 				case lexeme_type::kw_throw:
 				{
-					return "throw";
+					return "'throw'";
 				}
 				case lexeme_type::string_literal:
 				{
@@ -98,75 +103,75 @@ namespace lang::compiler::lexer
 				}
 				case lexeme_type::symb_add:
 				{
-					return "+";
+					return "'+'";
 				}
 				case lexeme_type::symb_add_assign:
 				{
-					return "+=";
+					return "'+='";
 				}
 				case lexeme_type::symb_minus:
 				{
-					return "-";
+					return "'-'";
 				}
 				case lexeme_type::symb_minus_assign:
 				{
-					return "-=";
+					return "'-='";
 				}
 				case lexeme_type::symb_multiply:
 				{
-					return "*";
+					return "'*'";
 				}
 				case lexeme_type::symb_multiply_assign:
 				{
-					return "*=";
+					return "'*='";
 				}
 				case lexeme_type::symb_divide:
 				{
-					return "/";
+					return "'/'";
 				}
 				case lexeme_type::symb_divide_assign:
 				{
-					return "/=";
+					return "'/='";
 				}
 				case lexeme_type::symb_arrow:
 				{
-					return "->";
+					return "'->'";
 				}
 				case lexeme_type::symb_equals:
 				{
-					return "=";
+					return "'='";
 				}
 				case lexeme_type::symb_question:
 				{
-					return "?";
+					return "'?'";
 				}
 				case lexeme_type::symb_colon:
 				{
-					return ":";
+					return "':'";
 				}
 				case lexeme_type::symb_open_parenthesis:
 				{
-					return "(";
+					return "'('";
 				}
 				case lexeme_type::symb_close_parenthesis:
 				{
-					return ")";
+					return "')'";
 				}
 				case lexeme_type::symb_open_bracket:
 				{
-					return "[";
+					return "'['";
 				}
 				case lexeme_type::symb_close_bracket:
 				{
-					return "]";
+					return "']'";
 				}
 				case lexeme_type::symb_open_brace:
 				{
-					return "{";
+					return "'{'";
 				}
 				case lexeme_type::symb_close_brace:
 				{
-					return "}";
+					return "'}'";
 				}
 				default:
 				{
