@@ -27,6 +27,8 @@ namespace lang::compiler::lexer
 			kw_catch,
 			kw_switch,
 			kw_throw,
+			kw_true,
+			kw_false,
 			
 			// symbols
 			symb_add,
@@ -96,6 +98,14 @@ namespace lang::compiler::lexer
 				case lexeme_type::kw_throw:
 				{
 					return "'throw'";
+				}
+				case lexeme_type::kw_true:
+				{
+					return "true";
+				}
+				case lexeme_type::kw_false:
+				{
+					return "false";
 				}
 				case lexeme_type::string_literal:
 				{

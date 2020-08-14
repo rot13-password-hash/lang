@@ -19,12 +19,14 @@ namespace lang::compiler::parser
 		std::string parse_type();
 
 		std::vector<ir::ast::var> parse_var_list();
-		std::unique_ptr<ir::ast::statement::function_definition> parse_function_definition();
-		void parse_type_definition();
-		//std::unique_ptr<ir::ast::statement::ret> parse_return();
 
-		std::unique_ptr<ir::ast::statement::block> parse_block();
-		std::unique_ptr<ir::ast::statement::top_level_block> parse_block_global();
+		std::unique_ptr<ir::ast::expression::expression> parse_expr();
+
+		std::unique_ptr<ir::ast::statement::function_definition> parse_function_definition_stat();
+		std::unique_ptr<ir::ast::statement::type_definition> parse_type_definition_stat();
+		std::unique_ptr<ir::ast::statement::ret> parse_return_stat();
+		std::unique_ptr<ir::ast::statement::block> parse_block_stat();
+		std::unique_ptr<ir::ast::statement::top_level_block> parse_block_global_restricted_stat();
 
 	public:
 		explicit parser(std::string_view source) :

@@ -9,8 +9,9 @@ using namespace lang::compiler;
 
 int main() {
     std::string source = R"s(
-fn meme() -> i32
+fn meme() -> bool
 {
+    return true
 }
 )s";
 

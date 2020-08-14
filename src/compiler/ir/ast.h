@@ -17,8 +17,12 @@ namespace lang::compiler::ir::ast
 		position start, end;
 	};
 
+	struct visitor;
+
 	struct node
 	{
+		virtual visit(visitor* vst) = 0;
+
 		position_range range;
 
 	protected:
@@ -54,6 +58,15 @@ namespace lang::compiler::ir::ast
 		{
 			expression(position_range range) :
 				node(range) {}
+		};
+
+		template <typename literal_t>
+		struct literal_expression : expression
+		{
+			literal_t val;
+
+			literal_expression(position_range range, literal_t val) :
+				expression(range), val(std::move(val)) {}
 		};
 	}
 
@@ -96,16 +109,21 @@ namespace lang::compiler::ir::ast
 			{}
 		};
 
-		struct define_type_alias : restricted_statement
+		struct type_definition : restricted_statement
+		{
+			using restricted_statement::restricted_statement;
+		};
+
+		struct alias_type_definition : type_definition
 		{
 			std::string alias_name;
 			type target_type;
 
-			define_type_alias(position_range range) :
-				restricted_statement(range) {}
+			alias_type_definition(position_range range, std::string alias_name, type target_type) :
+				type_definition(range), alias_name(std::move(alias_name)), target_type(std::move(target_type)) {}
 		};
 
-		struct define_type_definition : restricted_statement
+		struct class_type_definition : type_definition
 		{
 			std::string name;
 
@@ -118,8 +136,8 @@ namespace lang::compiler::ir::ast
 			std::vector<field> fields;
 			std::vector<std::unique_ptr<restricted_statement>> body;
 
-			define_type_definition(position_range range, std::vector<std::unique_ptr<restricted_statement>> body) :
-				restricted_statement(range), body(std::move(body)) {}
+			class_type_definition(position_range range, std::vector<std::unique_ptr<restricted_statement>> body) :
+				type_definition(range), body(std::move(body)) {}
 		};
 
 		struct top_level_block : statement
@@ -138,4 +156,9 @@ namespace lang::compiler::ir::ast
 				statement(range), value(std::move(value)) {}
 		};
 	}
+
+	struct visitor
+	{
+		bool visit()
+	};
 }

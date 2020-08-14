@@ -7,4 +7,6 @@ add_executable(lang
     src/main.cpp
     src/compiler/lexer/lexer.cpp
     src/compiler/parser/parser.cpp
-    src/compiler/code_gen/code_gen.cpp)
+    src/compiler/code_gen/code_gen.cpp
+	src/compiler/parser/passes/pass.cpp
+	src/compiler/parser/passes/type_analyzer.cpp)

@@ -51,7 +51,9 @@ namespace lang::compiler::lexer
 		{ "try", lexeme::lexeme_type::kw_try },
 		{ "catch", lexeme::lexeme_type::kw_catch },
 		{ "switch", lexeme::lexeme_type::kw_switch },
-		{ "throw", lexeme::lexeme_type::kw_throw }
+		{ "throw", lexeme::lexeme_type::kw_throw },
+		{ "true", lexeme::lexeme_type::kw_true },
+		{ "false", lexeme::lexeme_type::kw_false },
 	};
 
 	position lexer::current_position() const
