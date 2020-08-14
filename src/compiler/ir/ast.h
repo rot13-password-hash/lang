@@ -21,7 +21,7 @@ namespace lang::compiler::ir::ast
 
 	struct node
 	{
-		virtual visit(visitor* vst) = 0;
+		virtual void visit(visitor* vst) = 0;
 
 		position_range range;
 
@@ -41,6 +41,19 @@ namespace lang::compiler::ir::ast
 
 		type(type&& other) :
 			name(std::move(other.name)) {}
+	};
+
+	struct number
+	{
+		std::string value;
+
+		type() = default;
+
+		type(std::string value) :
+			name(std::move(value)) {}
+
+		type(type&& other) :
+			name(std::move(other.value)) {}
 	};
 
     struct var
@@ -67,6 +80,11 @@ namespace lang::compiler::ir::ast
 
 			literal_expression(position_range range, literal_t val) :
 				expression(range), val(std::move(val)) {}
+
+			void visit(visitor* vst)
+			{
+				vst->visit(this);
+			}
 		};
 	}
 
@@ -91,6 +109,17 @@ namespace lang::compiler::ir::ast
 
 			block(position_range range, std::vector<std::unique_ptr<statement>> body) :
 				statement(range), body(std::move(body)) {}
+
+			void visit(visitor* vst)
+			{
+				if (vst->visit(this))
+				{
+					for (const auto& stat : body)
+					{
+						stat->visit(vst);
+					}
+				}
+			}
 		};
 
 		struct function_definition : restricted_statement
@@ -107,6 +136,14 @@ namespace lang::compiler::ir::ast
 				arguments(std::move(arguments)),
 				return_type(std::move(return_type))
 			{}
+
+			void visit(visitor* vst)
+			{
+				if (vst->visit(this))
+				{
+					block->visit(vst);
+				}
+			}
 		};
 
 		struct type_definition : restricted_statement
@@ -121,6 +158,11 @@ namespace lang::compiler::ir::ast
 
 			alias_type_definition(position_range range, std::string alias_name, type target_type) :
 				type_definition(range), alias_name(std::move(alias_name)), target_type(std::move(target_type)) {}
+
+			void visit(visitor* vst)
+			{
+				vst->visit(this);
+			}
 		};
 
 		struct class_type_definition : type_definition
@@ -138,6 +180,25 @@ namespace lang::compiler::ir::ast
 
 			class_type_definition(position_range range, std::vector<std::unique_ptr<restricted_statement>> body) :
 				type_definition(range), body(std::move(body)) {}
+
+			void visit(visitor* vst)
+			{
+				if (vst->visit(this))
+				{
+					for (const auto& field : fields)
+					{
+						if (field.value)
+						{
+							field.value->visit(vst);
+						}
+					}
+
+					for (const auto& stat : body)
+					{
+						stat->visit(vst);
+					}
+				}
+			}
 		};
 
 		struct top_level_block : statement
@@ -157,8 +218,41 @@ namespace lang::compiler::ir::ast
 		};
 	}
 
+#define BASE_VISITOR(c) virtual bool visit(c* a) { return true; }
+#define VISITOR(b, c) virtual bool visit(c* a) { return visit(static_cast<b*>(a)); }
+
 	struct visitor
 	{
-		bool visit()
+		BASE_VISITOR(node);
+
+		VISITOR(node, expression::expression);
+		VISITOR(node, statement::statement);
+		VISITOR(node, statement::restricted_statement);
+
+		VISITOR(expression::expression, expression::literal_expression<std::string>);
+		VISITOR(expression::expression, expression::literal_expression<number>);
+		VISITOR(expression::expression, expression::literal_expression<std::int8_t>);
+		VISITOR(expression::expression, expression::literal_expression<std::int16_t>);
+		VISITOR(expression::expression, expression::literal_expression<std::int32_t>);
+		VISITOR(expression::expression, expression::literal_expression<std::int64_t>);
+		VISITOR(expression::expression, expression::literal_expression<std::uint8_t>);
+		VISITOR(expression::expression, expression::literal_expression<std::uint16_t>);
+		VISITOR(expression::expression, expression::literal_expression<std::uint32_t>);
+		VISITOR(expression::expression, expression::literal_expression<std::uint64_t>);
+		VISITOR(expression::expression, expression::literal_expression<float>);
+		VISITOR(expression::expression, expression::literal_expression<double>);
+		VISITOR(expression::expression, expression::literal_expression<bool>);
+
+		VISITOR(statement::restricted_statement, statement::type_definition);
+
+		VISITOR(statement::type_definition, statement::alias_type_definition);
+		VISITOR(statement::type_definition, statement::class_type_definition);
+
+		VISITOR(statement::statement, statement::block);
+		VISITOR(statement::statement, statement::top_level_block);
+		VISITOR(statement::statement, statement::ret);
 	};
+
+#undef BASE_VISITOR
+#undef VISITOR
 }
