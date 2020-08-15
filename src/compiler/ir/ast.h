@@ -17,6 +17,7 @@ namespace lang::compiler::ir::ast
 		position start, end;
 	};
 
+
 	struct visitor;
 
 	struct node
@@ -33,27 +34,38 @@ namespace lang::compiler::ir::ast
 	struct type
 	{
 		std::string name;
+		bool is_optional;
 
 		type() = default;
 
-		type(std::string name) :
-			name(std::move(name)) {}
+		type(std::string name, bool is_optional) :
+			name(std::move(name)), is_optional(is_optional) {}
 
 		type(type&& other) :
-			name(std::move(other.name)) {}
+			name(std::move(other.name)),
+			is_optional(other.is_optional) {}
+
+		type(type& other) :
+			name(other.name),
+			is_optional(other.is_optional) {}
+
+		type& operator=(type&& other) 
+		{
+			name = std::move(other.name);
+			is_optional = other.is_optional;
+
+			return *this;
+		}
 	};
 
 	struct number
 	{
 		std::string value;
 
-		type() = default;
+		number() = default;
 
-		type(std::string value) :
-			name(std::move(value)) {}
-
-		type(type&& other) :
-			name(std::move(other.value)) {}
+		number(std::string value) :
+			value(std::move(value)) {}
 	};
 
     struct var
@@ -74,17 +86,49 @@ namespace lang::compiler::ir::ast
 		};
 
 		template <typename literal_t>
-		struct literal_expression : expression
+		struct literal : expression
 		{
 			literal_t val;
 
-			literal_expression(position_range range, literal_t val) :
+			literal(position_range range, literal_t val) :
 				expression(range), val(std::move(val)) {}
 
 			void visit(visitor* vst)
 			{
 				vst->visit(this);
 			}
+		};
+
+		struct call : expression
+		{
+			std::unique_ptr<expression> func;
+			std::vector<std::unique_ptr<expression>> arguments;
+
+			call(position_range range, std::unique_ptr<expression> func, std::vector<std::unique_ptr<expression>> arguments) :
+				expression(range), func(std::move(func)), arguments(std::move(arguments)) {}
+
+			void visit_children(visitor* vst);
+			void visit(visitor* vst);
+		};
+
+		struct unresolved_variable : expression
+		{
+			std::string name;
+
+			unresolved_variable(position_range range, std::string name) :
+				expression(range), name(std::move(name)) {}
+
+			void visit(visitor* vst);
+		};
+
+		struct local_variable : expression
+		{
+
+		};
+
+		struct module_variable : expression
+		{
+
 		};
 	}
 
@@ -110,16 +154,8 @@ namespace lang::compiler::ir::ast
 			block(position_range range, std::vector<std::unique_ptr<statement>> body) :
 				statement(range), body(std::move(body)) {}
 
-			void visit(visitor* vst)
-			{
-				if (vst->visit(this))
-				{
-					for (const auto& stat : body)
-					{
-						stat->visit(vst);
-					}
-				}
-			}
+			void visit_children(visitor* vst);
+			void visit(visitor* vst);
 		};
 
 		struct function_definition : restricted_statement
@@ -137,13 +173,8 @@ namespace lang::compiler::ir::ast
 				return_type(std::move(return_type))
 			{}
 
-			void visit(visitor* vst)
-			{
-				if (vst->visit(this))
-				{
-					block->visit(vst);
-				}
-			}
+			void visit_children(visitor* vst);
+			void visit(visitor* vst);
 		};
 
 		struct type_definition : restricted_statement
@@ -159,10 +190,7 @@ namespace lang::compiler::ir::ast
 			alias_type_definition(position_range range, std::string alias_name, type target_type) :
 				type_definition(range), alias_name(std::move(alias_name)), target_type(std::move(target_type)) {}
 
-			void visit(visitor* vst)
-			{
-				vst->visit(this);
-			}
+			void visit(visitor* vst);
 		};
 
 		struct class_type_definition : type_definition
@@ -181,24 +209,8 @@ namespace lang::compiler::ir::ast
 			class_type_definition(position_range range, std::vector<std::unique_ptr<restricted_statement>> body) :
 				type_definition(range), body(std::move(body)) {}
 
-			void visit(visitor* vst)
-			{
-				if (vst->visit(this))
-				{
-					for (const auto& field : fields)
-					{
-						if (field.value)
-						{
-							field.value->visit(vst);
-						}
-					}
-
-					for (const auto& stat : body)
-					{
-						stat->visit(vst);
-					}
-				}
-			}
+			void visit_children(visitor* vst);
+			void visit(visitor* vst);
 		};
 
 		struct top_level_block : statement
@@ -207,14 +219,20 @@ namespace lang::compiler::ir::ast
 
 			top_level_block(position_range range, std::vector<std::unique_ptr<restricted_statement>> body) :
 				statement(range), body(std::move(body)) {}
+
+			void visit_children(visitor* vst);
+			void visit(visitor* vst);
 		};
 
 		struct ret : statement
 		{
-			std::unique_ptr<expression::expression> value;
+			std::unique_ptr<expression::expression> value; // can be nullptr
 
 			ret(position_range range, std::unique_ptr<expression::expression> value) :
 				statement(range), value(std::move(value)) {}
+
+			void visit_children(visitor* vst);
+			void visit(visitor* vst);
 		};
 	}
 
@@ -229,19 +247,21 @@ namespace lang::compiler::ir::ast
 		VISITOR(node, statement::statement);
 		VISITOR(node, statement::restricted_statement);
 
-		VISITOR(expression::expression, expression::literal_expression<std::string>);
-		VISITOR(expression::expression, expression::literal_expression<number>);
-		VISITOR(expression::expression, expression::literal_expression<std::int8_t>);
-		VISITOR(expression::expression, expression::literal_expression<std::int16_t>);
-		VISITOR(expression::expression, expression::literal_expression<std::int32_t>);
-		VISITOR(expression::expression, expression::literal_expression<std::int64_t>);
-		VISITOR(expression::expression, expression::literal_expression<std::uint8_t>);
-		VISITOR(expression::expression, expression::literal_expression<std::uint16_t>);
-		VISITOR(expression::expression, expression::literal_expression<std::uint32_t>);
-		VISITOR(expression::expression, expression::literal_expression<std::uint64_t>);
-		VISITOR(expression::expression, expression::literal_expression<float>);
-		VISITOR(expression::expression, expression::literal_expression<double>);
-		VISITOR(expression::expression, expression::literal_expression<bool>);
+		VISITOR(expression::expression, expression::literal<std::string>);
+		VISITOR(expression::expression, expression::literal<number>);
+		VISITOR(expression::expression, expression::literal<std::int8_t>);
+		VISITOR(expression::expression, expression::literal<std::int16_t>);
+		VISITOR(expression::expression, expression::literal<std::int32_t>);
+		VISITOR(expression::expression, expression::literal<std::int64_t>);
+		VISITOR(expression::expression, expression::literal<std::uint8_t>);
+		VISITOR(expression::expression, expression::literal<std::uint16_t>);
+		VISITOR(expression::expression, expression::literal<std::uint32_t>);
+		VISITOR(expression::expression, expression::literal<std::uint64_t>);
+		VISITOR(expression::expression, expression::literal<float>);
+		VISITOR(expression::expression, expression::literal<double>);
+		VISITOR(expression::expression, expression::literal<bool>);
+
+		VISITOR(expression::expression, expression::call);
 
 		VISITOR(statement::restricted_statement, statement::type_definition);
 

@@ -9,4 +9,6 @@ add_executable(lang
     src/compiler/parser/parser.cpp
     src/compiler/code_gen/code_gen.cpp
 	src/compiler/parser/passes/pass.cpp
-	src/compiler/parser/passes/type_analyzer.cpp)
+	src/compiler/parser/passes/type_analyzer.cpp 
+    src/compiler/ir/ast.cpp
+    src/debug/graphviz.cpp)

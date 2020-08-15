@@ -43,6 +43,7 @@ namespace lang::compiler::lexer
 			symb_equals,
 			symb_question,
 			symb_colon,
+			symb_comma,
 
 			// symbol pairs
 			symb_open_parenthesis,
@@ -158,6 +159,10 @@ namespace lang::compiler::lexer
 				case lexeme_type::symb_colon:
 				{
 					return "':'";
+				}
+				case lexeme_type::symb_comma:
+				{
+					return "','";
 				}
 				case lexeme_type::symb_open_parenthesis:
 				{

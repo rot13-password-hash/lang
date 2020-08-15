@@ -11,10 +11,10 @@ int main() {
     std::string source = R"s(
 fn meme() -> bool
 {
-    return true
+    return print("hello world")
 }
 )s";
-
+    
     /*
     lexer::lexer lexer{ source };
 

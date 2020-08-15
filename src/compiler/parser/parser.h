@@ -16,11 +16,14 @@ namespace lang::compiler::parser
 
 		void expect(lexer::lexeme::lexeme_type type, bool should_consume = false);
 
-		std::string parse_type();
+		ir::ast::type parse_type();
 
 		std::vector<ir::ast::var> parse_var_list();
-
+		std::vector<std::unique_ptr<ir::ast::expression::expression>> parse_expr_list();
+		
+		std::unique_ptr<ir::ast::expression::call> parse_call_expr_args(std::unique_ptr<ir::ast::expression::expression> func);
 		std::unique_ptr<ir::ast::expression::expression> parse_expr();
+		std::unique_ptr<ir::ast::expression::expression> parse_prefix_expr();
 
 		std::unique_ptr<ir::ast::statement::function_definition> parse_function_definition_stat();
 		std::unique_ptr<ir::ast::statement::type_definition> parse_type_definition_stat();
