@@ -15,21 +15,31 @@ namespace lang::compiler::parser
 			name(std::move(name)) {}
 	};
 	
+	struct type_reference
+	{
+		std::shared_ptr<type_descriptor> type;
+		bool is_optional;
+	};
+	
 	struct field_descriptor
 	{
 		std::string name;
-		std::shared_ptr<type_descriptor> type;
-		bool is_optional;
+		type_reference type;
 	};
 
 	struct class_type_descriptor : type_descriptor
 	{
 		std::unordered_map<std::string, field_descriptor> fields;
+
+		using type_descriptor::type_descriptor;
 	};
 
 	struct alias_type_descriptor : type_descriptor
 	{
 		std::shared_ptr<type_descriptor> aliased_type;
+
+		alias_type_descriptor(std::string name, std::shared_ptr<type_descriptor> aliased_type) :
+			type_descriptor(std::move(name)), aliased_type(std::move(aliased_type)) {}
 	};
 	
 	template <typename T>
@@ -54,9 +64,16 @@ namespace lang::compiler::parser
 
 		bool visit(ir::ast::statement::alias_type_definition* node) override
 		{
-			if (type_map.find(node->alias_name) != type_map.cend())
+			if (type_map.find(node->alias_name) == type_map.cend())
 			{
-
+				const auto aliased_it = type_map.find(node->target_type.name);
+				if (aliased_it == type_map.cend())
+				{
+					std::stringstream error_message;
+					error_message << "attempt to alias invalid type '" << node->target_type.name << "' as '" << node->alias_name << "'";
+					throw exception(node->range.start, error_message.str());
+				}
+				type_map[node->alias_name] = std::make_shared<alias_type_descriptor>(node->alias_name, aliased_it->second);
 			}
 			else
 			{
@@ -71,7 +88,20 @@ namespace lang::compiler::parser
 		{
 			if (type_map.find(node->name) == type_map.cend())
 			{
-				type_map[node->name] = std::make_shared<type_descriptor>(node->name);
+				auto class_desc = std::make_shared<class_type_descriptor>(node->name);
+
+				for (const auto& field : node->fields)
+				{
+					auto field_type_desc_it = type_map.find(field.variable.type_.name);
+					if (field_type_desc_it == type_map.cend())
+					{
+						std::stringstream error_message;
+						error_message << "attempt to declare field '" << field.variable.name << "' with invalid type '" << field.variable.type_.name << "'";
+						throw exception(node->range.start, error_message.str());
+					}
+					class_desc->fields[field.variable.name] = { field.variable.name, { field_type_desc_it->second, field.variable.type_.is_optional } };
+				}
+				type_map[node->name] = class_desc;
 			}
 			else
 			{

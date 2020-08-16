@@ -13,21 +13,10 @@ int main() {
     std::string source = R"s(
 fn main() -> void @constructor
 {
-    print("hello world")
+    print("hello world!")
 }
 
-type b
-{
-	
-}
-
-type b
-{
-
-}
-	
 type a = i32
-type a = i64
 )s";
 
 	try
