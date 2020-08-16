@@ -2,6 +2,8 @@
 #include "compiler/parser/parser.h"
 #include "compiler/utils/exception.h"
 
+#include "debug/graphviz.h"
+
 #include <iostream>
 #include <memory>
 
@@ -9,28 +11,34 @@ using namespace lang::compiler;
 
 int main() {
     std::string source = R"s(
-fn meme() -> bool
+fn main() -> void @constructor
 {
-    return print("hello world")
+    print("hello world")
 }
-)s";
-    
-    /*
-    lexer::lexer lexer{ source };
 
-    while (true)
-    {
-        std::cout << lexer.next().to_string() << '\n';
-        if (lexer.current().type == lexer::lexeme::lexeme_type::eof)
-        {
-            break;
-        }
-    }*/
+type b
+{
+	
+}
+
+type b
+{
+
+}
+	
+type a = i32
+type a = i64
+)s";
 
 	try
 	{
 		parser::parser parser{ source };
-		parser.parse();
+		auto root = parser.parse();
+
+        graphvizitor gviz;
+        root->visit(&gviz);
+        
+        std::cout << gviz.string();
 	}
 	catch (const exception& ex)
 	{

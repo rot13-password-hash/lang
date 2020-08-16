@@ -24,6 +24,19 @@ namespace lang::compiler::ir::ast
 		vst->visit(this);
 	}
 
+	void statement::expression_statement::visit_children(visitor* vst)
+	{
+		expr->visit(vst);
+	}
+
+	void statement::expression_statement::visit(visitor* vst)
+	{
+		if (vst->visit(this))
+		{
+			visit_children(vst);
+		}
+	}
+
 	void statement::block::visit_children(visitor* vst)
 	{
 		for (const auto& stat : body)
@@ -114,4 +127,3 @@ namespace lang::compiler::ir::ast
 		}
 	}
 }
-

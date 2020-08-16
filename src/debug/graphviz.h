@@ -24,6 +24,17 @@ public:
 	bool visit(lang::compiler::ir::ast::expression::literal<float>* literal_f32_expr) override;
 	bool visit(lang::compiler::ir::ast::expression::literal<double>* literal_f64_expr) override;
 	bool visit(lang::compiler::ir::ast::expression::literal<bool>* literal_bool_expr) override;
-
+	
 	bool visit(lang::compiler::ir::ast::expression::call* call_expr) override;
+	bool visit(lang::compiler::ir::ast::expression::unresolved_variable* unresolved_var_expr) override;
+
+	bool visit(lang::compiler::ir::ast::statement::function_definition* func_def_stat) override;
+	bool visit(lang::compiler::ir::ast::statement::alias_type_definition* alias_type_def) override;
+	bool visit(lang::compiler::ir::ast::statement::class_type_definition* class_type_def) override;
+
+	bool visit(lang::compiler::ir::ast::statement::block* block_stat) override;
+	bool visit(lang::compiler::ir::ast::statement::top_level_block* top_level_block_stat) override;
+	bool visit(lang::compiler::ir::ast::statement::ret* ret_stat) override;
+
+	std::string string() { return out.str(); }
 };

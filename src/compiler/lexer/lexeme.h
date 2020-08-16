@@ -14,6 +14,7 @@ namespace lang::compiler::lexer
 		{
 			eof,
 			identifier,
+			attribute,
 			
 			// literals
 			string_literal,
@@ -21,6 +22,7 @@ namespace lang::compiler::lexer
 
 			// keywords
 			kw_fn,
+			kw_as,
 			kw_return,
 			kw_type,
 			kw_try,
@@ -204,9 +206,13 @@ namespace lang::compiler::lexer
 				{
 					return { value.cbegin(), value.cend() };
 				}
+				case lexeme_type::attribute:
+				{
+					return '@' + std::string{ value.cbegin(), value.cend() };
+				}
 				case lexeme_type::string_literal:
 				{
-					return '"' + std::string{ value.cbegin(), value.cend() } +'"';
+					return '"' + std::string{ value.cbegin(), value.cend() } + '"';
 				}
 				default:
 				{

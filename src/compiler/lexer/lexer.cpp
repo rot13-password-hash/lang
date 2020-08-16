@@ -40,12 +40,14 @@ namespace lang::compiler::lexer
 		{ "->", lexeme::lexeme_type::symb_arrow },
 		{ "=", lexeme::lexeme_type::symb_equals },
 		{ "?", lexeme::lexeme_type::symb_question },
-		{ ":", lexeme::lexeme_type::symb_colon }
+		{ ":", lexeme::lexeme_type::symb_colon },
+		{ ",", lexeme::lexeme_type::symb_comma },
 	};
 
 	const lexeme_map_t keyword_map
 	{
 		{ "fn", lexeme::lexeme_type::kw_fn },
+		{ "as", lexeme::lexeme_type::kw_as },
 		{ "return", lexeme::lexeme_type::kw_return },
 		{ "type", lexeme::lexeme_type::kw_type },
 		{ "try", lexeme::lexeme_type::kw_try },
@@ -90,20 +92,22 @@ namespace lang::compiler::lexer
 		const auto is_long_comment = peek_character() == '/';
 		while (true)
 		{			
-			const auto peeked_character = peek_character();
-			if (!is_long_comment && peeked_character == '\n')
+			const auto next_char = peek_character();
+			if (!is_long_comment && next_char == '\n')
 			{
 				consume_character();
 				return;
 			}
 
-			if (is_long_comment && peeked_character == '/' && peek_character(1) == '/' && peek_character(2) == '/') // End of long comment
+			if (is_long_comment && next_char == '/' && peek_character(1) == '/' && peek_character(2) == '/')
 			{
 				consume_character();
 				consume_character();
 				consume_character();
 				return;
 			}
+
+			consume_character();
 		}
 	}
 
@@ -186,7 +190,7 @@ namespace lang::compiler::lexer
 		{
 			throw compiler::exception{
 				current_position(),
-				"unknown symbol"
+				"unexpected symbol"
 			};
 		}
 	}
@@ -256,17 +260,17 @@ namespace lang::compiler::lexer
 			case '/':
 			{
 				consume_character();
-				const auto next_character = peek_character();
+				const auto next_char = peek_character();
 					
 
-				if (next_character == '/')
+				if (next_char == '/')
 				{
 					consume_character();
 					skip_comment();
 					return next_lexeme();
 				}
 
-				if (next_character == '=')
+				if (next_char == '=')
 				{
 					consume_character();
 					current.type = lexeme::lexeme_type::symb_divide_assign;
@@ -282,6 +286,37 @@ namespace lang::compiler::lexer
 			{
 				consume_character();
 				lex_string();
+				return;
+			}
+			case '@':
+			{
+				consume_character();
+
+				const auto start_offset = read_offset;
+
+				if (!is_start_identifier_char(peek_character()))
+				{
+					throw compiler::exception{
+						current_position(),
+						"unexpected symbol"
+					};
+				}
+
+				consume_character();
+
+				while (true)
+				{
+					const auto next_char = peek_character();
+
+					if (!is_identifier_char(next_char))
+					{
+						current.type = lexeme::lexeme_type::attribute;
+						current.value = source.substr(start_offset, read_offset - start_offset);
+						break;
+					}
+
+					consume_character();
+				}
 				return;
 			}
 			default:

@@ -140,6 +140,16 @@ namespace lang::compiler::ir::ast
 				node(range) {}
 		};
 
+		struct expression_statement : statement
+		{
+			std::unique_ptr<expression::expression> expr;
+			expression_statement(position_range range, std::unique_ptr<expression::expression> expr) :
+				statement(range), expr(std::move(expr)) {}
+
+			void visit_children(visitor* vst);
+			void visit(visitor* vst);
+		};
+
 		// only in top level scope and type definitions
 		struct restricted_statement : node
 		{
@@ -163,14 +173,18 @@ namespace lang::compiler::ir::ast
 			std::string name;
 			std::vector<var> arguments;
 			type return_type;
+			std::vector<std::string> attributes;
 
 			std::unique_ptr<block> body_stat;
 
-			function_definition(position_range range, std::string name, std::vector<var> arguments, type return_type, std::unique_ptr<block> body_stat) :
+			function_definition(position_range range, std::string name, std::vector<var> arguments, type return_type,
+				std::vector<std::string> attributes, std::unique_ptr<block> body_stat) :
 				restricted_statement(range),
 				name(std::move(name)),
 				arguments(std::move(arguments)),
-				return_type(std::move(return_type))
+				return_type(std::move(return_type)),
+				attributes(std::move(attributes)),
+				body_stat(std::move(body_stat))
 			{}
 
 			void visit_children(visitor* vst);
@@ -262,8 +276,10 @@ namespace lang::compiler::ir::ast
 		VISITOR(expression::expression, expression::literal<bool>);
 
 		VISITOR(expression::expression, expression::call);
+		VISITOR(expression::expression, expression::unresolved_variable);
 
 		VISITOR(statement::restricted_statement, statement::type_definition);
+		VISITOR(statement::restricted_statement, statement::function_definition)
 
 		VISITOR(statement::type_definition, statement::alias_type_definition);
 		VISITOR(statement::type_definition, statement::class_type_definition);

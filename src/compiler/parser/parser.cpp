@@ -67,8 +67,13 @@ std::unique_ptr<ir::ast::expression::call> parser::parser::parse_call_expr_args(
 {
 	const auto start = lexer.current_lexeme().pos;
 
+	std::vector<std::unique_ptr<ir::ast::expression::expression>> arguments;
+
 	lexer.next_lexeme();
-	auto arguments = parse_expr_list();
+	if (lexer.current_lexeme().type != lexeme_type::symb_close_parenthesis)
+	{
+		arguments = parse_expr_list();
+	}
 	expect(lexeme_type::symb_close_parenthesis, true);
 
 	return std::make_unique<ir::ast::expression::call>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(func), std::move(arguments));
@@ -177,11 +182,18 @@ std::unique_ptr<ir::ast::statement::function_definition> parser::parser::parse_f
 		return_type.is_optional = false;
 	}
 
+	std::vector<std::string> attributes;
+	while (lexer.current_lexeme().type == lexeme_type::attribute)
+	{
+		attributes.emplace_back(lexer.current_lexeme().value);
+		lexer.next_lexeme();
+	}
+
 	expect(lexeme_type::symb_open_brace);
 	auto block = parse_block_stat();
 
 	return std::make_unique<ir::ast::statement::function_definition>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::string{ function_name }, std::move(arg_list),
-		std::move(return_type), std::move(block));
+		std::move(return_type), std::move(attributes), std::move(block));
 }
 
 std::unique_ptr<ir::ast::statement::type_definition> parser::parser::parse_type_definition_stat()
@@ -218,6 +230,7 @@ std::unique_ptr<ir::ast::statement::type_definition> parser::parser::parse_type_
 				expect(lexeme_type::symb_colon, true);
 
 				const auto type = parse_type();
+				
 				// TODO: construct node
 			}
 
@@ -268,6 +281,12 @@ std::unique_ptr<ir::ast::statement::block> parser::parser::parse_block_stat()
 			{
 				body.push_back(parse_return_stat());
 				break;
+			}
+			default:
+			{
+				auto expr = parse_expr();
+				body.push_back(std::make_unique<ir::ast::statement::expression_statement>(
+					ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(expr)));
 			}
 		}
 	}
