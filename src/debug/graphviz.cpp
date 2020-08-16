@@ -113,8 +113,8 @@ bool graphvizitor::visit(lang::compiler::ir::ast::statement::function_definition
 	label_ss << "fn " << func_def_stat->name << '(';
 	for (std::size_t i = 0; i < func_def_stat->arguments.size(); ++i)
 	{
-		label_ss << func_def_stat->arguments[i].name << ": " << func_def_stat->arguments[i].type.name;
-		if (func_def_stat->arguments[i].type.is_optional)
+		label_ss << func_def_stat->arguments[i].name << ": " << func_def_stat->arguments[i].type_.name;
+		if (func_def_stat->arguments[i].type_.is_optional)
 		{
 			label_ss << '?';
 		}

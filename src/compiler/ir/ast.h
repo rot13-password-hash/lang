@@ -70,7 +70,7 @@ namespace lang::compiler::ir::ast
 
     struct var
     {
-		type type;
+		type type_;
         std::string name;
 
 		//var(type type, std::string name) :
