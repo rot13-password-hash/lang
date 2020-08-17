@@ -73,18 +73,7 @@ namespace lang::compiler::ir::ast
 
 	void statement::class_type_definition::visit_children(visitor* vst)
 	{
-		for (const auto& field : fields)
-		{
-			if (field.value)
-			{
-				field.value->visit(vst);
-			}
-		}
-
-		for (const auto& stat : body)
-		{
-			stat->visit(vst);
-		}
+		body->visit(vst);
 	}
 
 	void statement::class_type_definition::visit(visitor* vst)
@@ -95,7 +84,7 @@ namespace lang::compiler::ir::ast
 		}
 	}
 
-	void statement::top_level_block::visit_children(visitor* vst)
+	void statement::restricted_block::visit_children(visitor* vst)
 	{
 		for (const auto& stat : body)
 		{
@@ -103,7 +92,7 @@ namespace lang::compiler::ir::ast
 		}
 	}
 
-	void statement::top_level_block::visit(visitor* vst)
+	void statement::restricted_block::visit(visitor* vst)
 	{
 		if (vst->visit(this))
 		{

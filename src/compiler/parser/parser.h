@@ -29,13 +29,14 @@ namespace lang::compiler::parser
 		std::unique_ptr<ir::ast::statement::type_definition> parse_type_definition_stat();
 		std::unique_ptr<ir::ast::statement::ret> parse_return_stat();
 		std::unique_ptr<ir::ast::statement::block> parse_block_stat();
-		std::unique_ptr<ir::ast::statement::top_level_block> parse_block_global_restricted_stat();
+		std::unique_ptr<ir::ast::statement::restricted_statement> parse_restricted_stat();
+		std::unique_ptr<ir::ast::statement::restricted_block> parse_block_restricted_stat();
 
 	public:
 		explicit parser(std::string_view source) :
 			lexer(source)
 		{}
 
-		std::unique_ptr<ir::ast::statement::top_level_block> parse();
+		std::unique_ptr<ir::ast::statement::restricted_block> parse();
 	};
 }
