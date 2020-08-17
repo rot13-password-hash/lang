@@ -4,8 +4,6 @@
 #include <iostream>
 #include <sstream>
 
-#include "../../bytecode/instruction.h"
-
 #include "passes/pass.h"
 
 using namespace lang::compiler;
@@ -29,7 +27,7 @@ void parser::parser::expect(lexeme_type type, bool should_consume)
 ir::ast::type parser::parser::parse_type()
 {
 	expect(lexeme_type::identifier);
-	const auto target_type_name = std::string{ lexer.current_lexeme().value };
+	auto target_type_name = std::string{ lexer.current_lexeme().value };
 	lexer.next_lexeme();
 
 	if (lexer.current_lexeme().type == lexer::lexeme::lexeme_type::symb_question)
@@ -208,7 +206,7 @@ std::unique_ptr<ir::ast::statement::type_definition> parser::parser::parse_type_
 
 	switch (lexer.current_lexeme().type)
 	{
-		case lexeme_type::symb_equals:
+		case lexeme_type::symb_equals: // type <name> = <existing type>
 		{
 			lexer.next_lexeme();
 
@@ -216,26 +214,35 @@ std::unique_ptr<ir::ast::statement::type_definition> parser::parser::parse_type_
 			return std::make_unique<ir::ast::statement::alias_type_definition>(ir::ast::position_range{ start, lexer.current_lexeme().pos },
 				type_name, target_type_desc);
 		}
-		case lexeme_type::symb_open_brace:
+		case lexeme_type::symb_open_brace: // type <name> { <type block> }
 		{
-			//type_map[identifier_string] = std::make_unique<user_defined_type_desc>(identifier_string);
 			lexer.next_lexeme();
 
+			std::vector<ir::ast::var> fields;
+			std::vector<std::unique_ptr<ir::ast::statement::restricted_statement>> body;
 			while (lexer.current_lexeme().type != lexeme_type::symb_close_brace)
 			{
-				expect(lexeme_type::identifier);
-				const auto& field_name = lexer.current_lexeme();
-				lexer.next_lexeme();
+				if (lexer.current_lexeme().type == lexeme_type::identifier)
+				{
+					const auto field_name = std::string{ lexer.current_lexeme().value };
+					lexer.next_lexeme();
 
-				expect(lexeme_type::symb_colon, true);
+					expect(lexeme_type::symb_colon, true);
 
-				const auto type = parse_type();
-				
-				// TODO: construct node
+					auto type = parse_type();
+		
+					fields.emplace_back(std::move(type), field_name);
+				}
+				else
+				{
+					body.push_back(parse_restricted_stat());
+				}
 			}
+			expect(lexeme_type::symb_close_brace, true);
 
-			lexer.next_lexeme();
-			break;
+			auto body_stat = std::make_unique<ir::ast::statement::restricted_block>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(body));
+
+			return std::make_unique<ir::ast::statement::class_type_definition>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(fields), std::move(body_stat));
 		}
 		default:
 		{
@@ -294,50 +301,57 @@ std::unique_ptr<ir::ast::statement::block> parser::parser::parse_block_stat()
 	return std::make_unique<ir::ast::statement::block>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(body));
 }
 
-std::unique_ptr<ir::ast::statement::top_level_block> parser::parser::parse_block_global_restricted_stat()
+std::unique_ptr<ir::ast::statement::restricted_statement> parser::parser::parse_restricted_stat()
 {
-	position start = lexer.current_lexeme().pos;
+	const auto& lexeme = lexer.current_lexeme();
+
+	switch (lexeme.type)
+	{
+		case lexeme_type::kw_fn:
+		{
+			return parse_function_definition_stat();
+		}
+		case lexeme_type::kw_type:
+		{
+			return parse_type_definition_stat();
+		}
+		default:
+		{
+			std::stringstream error_message;
+			error_message << "unexpected identifier " << lexeme.to_string() << " in restricted namespace, expected a type or function definition";
+			throw exception{ lexer.current_lexeme().pos, error_message.str() };
+		}
+	}
+}
+
+std::unique_ptr<ir::ast::statement::restricted_block> parser::parser::parse_block_restricted_stat()
+{
+	const auto start = lexer.current_lexeme().pos;
 	
 	std::vector<std::unique_ptr<ir::ast::statement::restricted_statement>> body;
 	while (true)
 	{
 		const auto& lexeme = lexer.current_lexeme();
 
-		if (lexeme.type == lexeme_type::eof)
+		if (lexeme.type == lexeme_type::eof
+			|| lexeme.type == lexeme_type::symb_close_brace)
 		{
 			break;
 		}
 
-		switch (lexeme.type)
-		{
-			case lexeme_type::kw_fn:
-			{
-				body.push_back(parse_function_definition_stat());
-				break;
-			}
-			case lexeme_type::kw_type:
-			{
-				body.push_back(parse_type_definition_stat());
-				break;
-			}
-			default:
-			{
-				std::stringstream error_message;
-				error_message << "unexpected identifier " << lexeme.to_string() << " in restricted (global) namespace, expected a type or function definition";
-				throw exception{ lexer.current_lexeme().pos, error_message.str() };
-			}
-		}
+		body.push_back(parse_restricted_stat());
 	}
 
-	return std::make_unique<ir::ast::statement::top_level_block>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(body));
+	return std::make_unique<ir::ast::statement::restricted_block>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(body));
 }
 
-std::unique_ptr<ir::ast::statement::top_level_block> parser::parser::parse()
+std::unique_ptr<ir::ast::statement::restricted_block> parser::parser::parse()
 {
 	lexer.next_lexeme();
 
-	auto root = parse_block_global_restricted_stat();
+	auto root = parse_block_restricted_stat();
+	expect(lexeme_type::eof);
 	pass::invoke_all(root.get());
 
-	return std::move(root);
+	return root;
 }

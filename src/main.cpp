@@ -14,9 +14,7 @@ int main() {
 fn main() -> void @constructor
 {
     print("hello world!")
-}
-
-type a = i32
+}=
 )s";
 
 	try

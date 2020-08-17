@@ -33,7 +33,7 @@ public:
 	bool visit(lang::compiler::ir::ast::statement::class_type_definition* class_type_def) override;
 
 	bool visit(lang::compiler::ir::ast::statement::block* block_stat) override;
-	bool visit(lang::compiler::ir::ast::statement::top_level_block* top_level_block_stat) override;
+	bool visit(lang::compiler::ir::ast::statement::restricted_block* top_level_block_stat) override;
 	bool visit(lang::compiler::ir::ast::statement::ret* ret_stat) override;
 
 	std::string string() { return out.str(); }

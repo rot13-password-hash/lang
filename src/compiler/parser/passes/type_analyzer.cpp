@@ -7,60 +7,19 @@
 
 namespace lang::compiler::parser
 {
-	struct type_descriptor
-	{
-		std::string name;
-
-		type_descriptor(std::string name) :
-			name(std::move(name)) {}
-	};
-	
-	struct type_reference
-	{
-		std::shared_ptr<type_descriptor> type;
-		bool is_optional;
-	};
-	
-	struct field_descriptor
-	{
-		std::string name;
-		type_reference type;
-	};
-
-	struct class_type_descriptor : type_descriptor
-	{
-		std::unordered_map<std::string, field_descriptor> fields;
-
-		using type_descriptor::type_descriptor;
-	};
-
-	struct alias_type_descriptor : type_descriptor
-	{
-		std::shared_ptr<type_descriptor> aliased_type;
-
-		alias_type_descriptor(std::string name, std::shared_ptr<type_descriptor> aliased_type) :
-			type_descriptor(std::move(name)), aliased_type(std::move(aliased_type)) {}
-	};
-	
-	template <typename T>
-	struct built_in_type_descriptor : type_descriptor
-	{
-		using type_descriptor::type_descriptor;
-	};
-
 	struct type_collector : ir::ast::visitor
 	{
 		std::unordered_map<std::string, std::shared_ptr<type_descriptor>>& type_map;
-
+		/*
 		bool visit(ir::ast::node* node) override
 		{
 			return false;
 		}
 
-		bool visit(ir::ast::statement::top_level_block* node) override
+		bool visit(ir::ast::statement::restricted_block* node) override
 		{
 			return true;
-		}
+		}*/
 
 		bool visit(ir::ast::statement::alias_type_definition* node) override
 		{
@@ -92,14 +51,14 @@ namespace lang::compiler::parser
 
 				for (const auto& field : node->fields)
 				{
-					auto field_type_desc_it = type_map.find(field.variable.type_.name);
+					auto field_type_desc_it = type_map.find(field.type_.name);
 					if (field_type_desc_it == type_map.cend())
 					{
 						std::stringstream error_message;
-						error_message << "attempt to declare field '" << field.variable.name << "' with invalid type '" << field.variable.type_.name << "'";
+						error_message << "attempt to declare field '" << field.name << "' with invalid type '" << field.type_.name << "'";
 						throw exception(node->range.start, error_message.str());
 					}
-					class_desc->fields[field.variable.name] = { field.variable.name, { field_type_desc_it->second, field.variable.type_.is_optional } };
+					class_desc->fields[field.name] = { field.name, { field_type_desc_it->second, field.type_.is_optional } };
 				}
 				type_map[node->name] = class_desc;
 			}
@@ -116,7 +75,7 @@ namespace lang::compiler::parser
 			type_map(type_map) {}
 	};
 
-	void type_analyzer::invoke_single(ir::ast::statement::top_level_block* root)
+	void type_analyzer::invoke_single(ir::ast::statement::restricted_block* root)
 	{
 		std::unordered_map<std::string, std::shared_ptr<type_descriptor>> type_map
 		{

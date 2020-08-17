@@ -173,7 +173,7 @@ bool graphvizitor::visit(ir::ast::statement::block* block_stat)
 	return false;
 }
 
-bool graphvizitor::visit(ir::ast::statement::top_level_block* top_level_block_stat)
+bool graphvizitor::visit(ir::ast::statement::restricted_block* top_level_block_stat)
 {
 	out << "digraph\n{\n";
 

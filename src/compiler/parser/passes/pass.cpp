@@ -6,17 +6,17 @@
 
 namespace lang::compiler::parser
 {
-	bool pass::invoke(ir::ast::statement::top_level_block* root)
+	bool pass::invoke(ir::ast::statement::restricted_block* root)
 	{
 		return false;
 	}
 
-	void pass::invoke_single(ir::ast::statement::top_level_block* root)
+	void pass::invoke_single(ir::ast::statement::restricted_block* root)
 	{
 
 	}
 
-	void pass::invoke_all(ir::ast::statement::top_level_block* root)
+	void pass::invoke_all(ir::ast::statement::restricted_block* root)
 	{
 		std::vector<std::unique_ptr<pass>> passes{};
 		passes.emplace_back(std::make_unique<type_analyzer>());

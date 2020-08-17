@@ -6,9 +6,11 @@
 #include <memory>
 #include <string>
 #include <optional>
+#include <variant>
 #include <vector>
 
 #include "../utils/position.h"
+#include "types.h"
 
 namespace lang::compiler::ir::ast
 {
@@ -30,7 +32,7 @@ namespace lang::compiler::ir::ast
 		node(position_range range) :
 			range(range) {}
 	};
-
+	
 	struct type
 	{
 		std::string name;
@@ -49,7 +51,7 @@ namespace lang::compiler::ir::ast
 			name(other.name),
 			is_optional(other.is_optional) {}
 
-		type& operator=(type&& other) 
+		type& operator=(type&& other) noexcept
 		{
 			name = std::move(other.name);
 			is_optional = other.is_optional;
@@ -57,6 +59,8 @@ namespace lang::compiler::ir::ast
 			return *this;
 		}
 	};
+	
+	using type_reference = std::variant<type, types::type_reference>;
 
 	struct number
 	{
@@ -73,8 +77,8 @@ namespace lang::compiler::ir::ast
 		type type_;
         std::string name;
 
-		//var(type type, std::string name) :
-			//type(type), name(std::move(name)) {}
+		var(type type_, std::string name) :
+			type_(std::move(type_)), name(std::move(name)) {}
     };
 
 	namespace expression
@@ -207,32 +211,26 @@ namespace lang::compiler::ir::ast
 			void visit(visitor* vst);
 		};
 
-		struct class_type_definition : type_definition
+		struct restricted_block : statement
 		{
-			std::string name;
-
-			struct field
-			{
-				var variable;
-				std::unique_ptr<expression::expression> value = nullptr;
-			};
-
-			std::vector<field> fields;
 			std::vector<std::unique_ptr<restricted_statement>> body;
 
-			class_type_definition(position_range range, std::vector<std::unique_ptr<restricted_statement>> body) :
-				type_definition(range), body(std::move(body)) {}
+			restricted_block(position_range range, std::vector<std::unique_ptr<restricted_statement>> body) :
+				statement(range), body(std::move(body)) {}
 
 			void visit_children(visitor* vst);
 			void visit(visitor* vst);
 		};
 
-		struct top_level_block : statement
+		struct class_type_definition : type_definition
 		{
-			std::vector<std::unique_ptr<restricted_statement>> body;
+			std::string name;
 
-			top_level_block(position_range range, std::vector<std::unique_ptr<restricted_statement>> body) :
-				statement(range), body(std::move(body)) {}
+			std::vector<var> fields;
+			std::unique_ptr<restricted_block> body;
+
+			class_type_definition(position_range range, std::vector<var> fields, std::unique_ptr<restricted_block> body) :
+				type_definition(range), fields(std::move(fields)), body(std::move(body)) {}
 
 			void visit_children(visitor* vst);
 			void visit(visitor* vst);
@@ -285,7 +283,7 @@ namespace lang::compiler::ir::ast
 		VISITOR(statement::type_definition, statement::class_type_definition);
 
 		VISITOR(statement::statement, statement::block);
-		VISITOR(statement::statement, statement::top_level_block);
+		VISITOR(statement::statement, statement::restricted_block);
 		VISITOR(statement::statement, statement::ret);
 	};
 
