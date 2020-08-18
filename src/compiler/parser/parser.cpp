@@ -40,9 +40,29 @@ ir::ast::type parser::parser::parse_type()
 	return { std::move(target_type_name), false };
 }
 
+ir::ast::var parser::parser::parse_var()
+{
+	const auto var_name = std::string{ lexer.current_lexeme().value };
+	lexer.next_lexeme();
+	expect(lexeme_type::symb_colon, true);
+	return ir::ast::var(parse_type(), var_name);
+}
+
 std::vector<ir::ast::var> parser::parser::parse_var_list()
 {
-	return {};
+	std::vector<ir::ast::var> var_list;
+
+	if (lexer.current_lexeme().type != lexeme_type::symb_close_parenthesis)
+	{
+		var_list.emplace_back(parse_var());
+		while (lexer.current_lexeme().type == lexeme_type::symb_comma)
+		{
+			lexer.next_lexeme();
+			var_list.emplace_back(parse_var());
+		}
+	}
+	
+	return std::move(var_list);
 }
 
 std::vector<std::unique_ptr<ir::ast::expression::expression>> parser::parser::parse_expr_list()

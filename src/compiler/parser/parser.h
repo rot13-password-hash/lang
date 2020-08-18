@@ -17,7 +17,8 @@ namespace lang::compiler::parser
 		void expect(lexer::lexeme::lexeme_type type, bool should_consume = false);
 
 		ir::ast::type parse_type();
-
+		ir::ast::var parse_var();
+		
 		std::vector<ir::ast::var> parse_var_list();
 		std::vector<std::unique_ptr<ir::ast::expression::expression>> parse_expr_list();
 		

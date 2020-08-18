@@ -10,6 +10,8 @@ class graphvizitor : public lang::compiler::ir::ast::visitor
 
 	void* parent_id = nullptr;
 	void write_node(void* id, const std::string& label);
+
+	static std::string format_type(const lang::compiler::ir::ast::type_reference& type_ref);
 public:
 	bool visit(lang::compiler::ir::ast::expression::literal<std::string>* literal_string_expr) override;
 	bool visit(lang::compiler::ir::ast::expression::literal<lang::compiler::ir::ast::number>* literal_number_expr) override;

@@ -19,10 +19,13 @@ namespace lang::compiler::ir::ast
 		}
 	}
 
+
 	void expression::unresolved_variable::visit(visitor* vst)
 	{
 		vst->visit(this);
 	}
+
+
 
 	void statement::expression_statement::visit_children(visitor* vst)
 	{
@@ -36,6 +39,7 @@ namespace lang::compiler::ir::ast
 			visit_children(vst);
 		}
 	}
+
 
 	void statement::block::visit_children(visitor* vst)
 	{
@@ -70,6 +74,8 @@ namespace lang::compiler::ir::ast
 	{
 		vst->visit(this);
 	}
+
+
 
 	void statement::class_type_definition::visit_children(visitor* vst)
 	{

@@ -8,6 +8,9 @@
 #include <optional>
 #include <variant>
 #include <vector>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Value.h>
+
 
 #include "../utils/position.h"
 #include "types.h"
@@ -25,9 +28,11 @@ namespace lang::compiler::ir::ast
 	struct node
 	{
 		virtual void visit(visitor* vst) = 0;
-
+		virtual llvm::Value* gen_code(llvm::Module* mod, llvm::IRBuilder<>& builder);
+		
 		position_range range;
 
+		virtual ~node() {}
 	protected:
 		node(position_range range) :
 			range(range) {}
@@ -74,7 +79,7 @@ namespace lang::compiler::ir::ast
 
     struct var
     {
-		type type_;
+		type_reference type_;
         std::string name;
 
 		var(type type_, std::string name) :
@@ -87,6 +92,8 @@ namespace lang::compiler::ir::ast
 		{
 			expression(position_range range) :
 				node(range) {}
+
+			virtual ~expression() {}
 		};
 
 		template <typename literal_t>
@@ -101,6 +108,8 @@ namespace lang::compiler::ir::ast
 			{
 				vst->visit(this);
 			}
+
+			llvm::Value* gen_code(llvm::Module* mod, llvm::IRBuilder<>& builder) override;
 		};
 
 		struct call : expression
@@ -113,6 +122,8 @@ namespace lang::compiler::ir::ast
 
 			void visit_children(visitor* vst);
 			void visit(visitor* vst);
+
+			llvm::Value* gen_code(llvm::Module* mod, llvm::IRBuilder<>& builder) override;
 		};
 
 		struct unresolved_variable : expression
@@ -123,6 +134,8 @@ namespace lang::compiler::ir::ast
 				expression(range), name(std::move(name)) {}
 
 			void visit(visitor* vst);
+
+			llvm::Value* gen_code(llvm::Module* mod, llvm::IRBuilder<>& builder) override; // error, unresolved
 		};
 
 		struct local_variable : expression
@@ -142,6 +155,8 @@ namespace lang::compiler::ir::ast
 		{
 			statement(position_range range) :
 				node(range) {}
+
+			virtual ~statement() {};
 		};
 
 		struct expression_statement : statement
@@ -152,6 +167,8 @@ namespace lang::compiler::ir::ast
 
 			void visit_children(visitor* vst);
 			void visit(visitor* vst);
+
+			llvm::Value* gen_code(llvm::Module* mod, llvm::IRBuilder<>& builder) override;
 		};
 
 		// only in top level scope and type definitions
@@ -159,6 +176,8 @@ namespace lang::compiler::ir::ast
 		{
 			restricted_statement(position_range range) :
 				node(range) {}
+
+			virtual ~restricted_statement() {};
 		};
 
 		struct block : statement
@@ -170,13 +189,15 @@ namespace lang::compiler::ir::ast
 
 			void visit_children(visitor* vst);
 			void visit(visitor* vst);
+
+			llvm::Value* gen_code(llvm::Module* mod, llvm::IRBuilder<>& builder) override; // error, block should not be in cfg
 		};
 
 		struct function_definition : restricted_statement
 		{
 			std::string name;
 			std::vector<var> arguments;
-			type return_type;
+			type_reference return_type;
 			std::vector<std::string> attributes;
 
 			std::unique_ptr<block> body_stat;
@@ -193,22 +214,28 @@ namespace lang::compiler::ir::ast
 
 			void visit_children(visitor* vst);
 			void visit(visitor* vst);
+
+			llvm::Value* gen_code(llvm::Module* mod, llvm::IRBuilder<>& builder) override; // error, function definition should not be in cfg
 		};
 
 		struct type_definition : restricted_statement
 		{
 			using restricted_statement::restricted_statement;
+
+			virtual ~type_definition() {}
 		};
 
 		struct alias_type_definition : type_definition
 		{
 			std::string alias_name;
-			type target_type;
+			type_reference target_type;
 
 			alias_type_definition(position_range range, std::string alias_name, type target_type) :
 				type_definition(range), alias_name(std::move(alias_name)), target_type(std::move(target_type)) {}
 
 			void visit(visitor* vst);
+
+			llvm::Value* gen_code(llvm::Module* mod, llvm::IRBuilder<>& builder) override; // error?
 		};
 
 		struct restricted_block : statement
@@ -220,6 +247,8 @@ namespace lang::compiler::ir::ast
 
 			void visit_children(visitor* vst);
 			void visit(visitor* vst);
+
+			llvm::Value* gen_code(llvm::Module* mod, llvm::IRBuilder<>& builder) override; // error?
 		};
 
 		struct class_type_definition : type_definition
@@ -234,6 +263,8 @@ namespace lang::compiler::ir::ast
 
 			void visit_children(visitor* vst);
 			void visit(visitor* vst);
+
+			llvm::Value* gen_code(llvm::Module* mod, llvm::IRBuilder<>& builder) override; // error?
 		};
 
 		struct ret : statement
@@ -245,6 +276,8 @@ namespace lang::compiler::ir::ast
 
 			void visit_children(visitor* vst);
 			void visit(visitor* vst);
+
+			llvm::Value* gen_code(llvm::Module* mod, llvm::IRBuilder<>& builder) override;
 		};
 	}
 
@@ -253,6 +286,8 @@ namespace lang::compiler::ir::ast
 
 	struct visitor
 	{
+		virtual ~visitor() {}
+
 		BASE_VISITOR(node);
 
 		VISITOR(node, expression::expression);

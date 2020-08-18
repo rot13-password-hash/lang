@@ -9,6 +9,8 @@ namespace lang::compiler::parser
 {
 	struct pass
 	{
+		virtual ~pass() {}
+
 		// returns true if ast modified
 		virtual bool invoke(ir::ast::statement::restricted_block* root);
 
@@ -16,6 +18,4 @@ namespace lang::compiler::parser
 
 		static void invoke_all(ir::ast::statement::restricted_block* root);
 	};
-
-
 }

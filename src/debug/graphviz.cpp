@@ -11,6 +11,34 @@ void graphvizitor::write_node(void* id, const std::string& label)
 	}
 }
 
+std::string graphvizitor::format_type(const lang::compiler::ir::ast::type_reference& type_ref)
+{
+	std::stringstream ss;
+	std::visit([&ss](auto&& type)
+		{
+			using T = std::decay_t<decltype(type)>;
+			if constexpr (std::is_same_v<T, ir::ast::type>)
+			{
+				ss << "unresolved_type<" << type.name;
+				if (type.is_optional)
+				{
+					ss << '?';
+				}
+				ss << '>';
+			}
+			else if constexpr (std::is_same_v<T, ir::types::type_reference>)
+			{
+				ss << type.type->name;
+				if (type.is_optional)
+				{
+					ss << '?';
+				}
+			}
+		}, type_ref);
+
+	return ss.str();
+}
+
 bool graphvizitor::visit(ir::ast::expression::literal<std::string>* literal_string_expr)
 {
 	write_node(literal_string_expr, "string\\n\\\"" + literal_string_expr->val + "\\\"");
@@ -113,11 +141,7 @@ bool graphvizitor::visit(lang::compiler::ir::ast::statement::function_definition
 	label_ss << "fn " << func_def_stat->name << '(';
 	for (std::size_t i = 0; i < func_def_stat->arguments.size(); ++i)
 	{
-		label_ss << func_def_stat->arguments[i].name << ": " << func_def_stat->arguments[i].type_.name;
-		if (func_def_stat->arguments[i].type_.is_optional)
-		{
-			label_ss << '?';
-		}
+		label_ss << func_def_stat->arguments[i].name << ": " << format_type(func_def_stat->arguments[i].type_);
 
 		if (i + 1 == func_def_stat->arguments.size())
 		{
@@ -126,11 +150,7 @@ bool graphvizitor::visit(lang::compiler::ir::ast::statement::function_definition
 
 		label_ss << ", ";
 	}
-	label_ss << ") -> " << func_def_stat->return_type.name;
-	if (func_def_stat->return_type.is_optional)
-	{
-		label_ss << '?';
-	}
+	label_ss << ") -> " << format_type(func_def_stat->return_type);
 
 	for (auto attribute : func_def_stat->attributes)
 	{
