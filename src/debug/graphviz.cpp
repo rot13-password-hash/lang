@@ -169,7 +169,9 @@ bool graphvizitor::visit(lang::compiler::ir::ast::statement::function_definition
 
 bool graphvizitor::visit(ir::ast::statement::alias_type_definition* alias_type_def)
 {
-	throw std::runtime_error("alias type definition not implemented");
+	std::stringstream label_ss;
+	label_ss << "type " << alias_type_def->alias_name << " = " << alias_type_def->target_type.name;
+	write_node(alias_type_def, label_ss.str());
 	return false;
 }
 
