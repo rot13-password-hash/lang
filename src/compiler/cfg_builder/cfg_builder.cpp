@@ -1,5 +1,6 @@
 #include "cfg_builder.h"
 #include <unordered_map>
+#include <stdexcept>
 
 using namespace lang::compiler;
 

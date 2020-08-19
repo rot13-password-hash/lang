@@ -167,10 +167,11 @@ bool graphvizitor::visit(lang::compiler::ir::ast::statement::function_definition
 	return false;
 }
 
+
 bool graphvizitor::visit(ir::ast::statement::alias_type_definition* alias_type_def)
 {
 	std::stringstream label_ss;
-	label_ss << "type " << alias_type_def->alias_name << " = " << alias_type_def->target_type.name;
+	//label_ss << "type " << alias_type_def->alias_name << " = " << alias_type_def->target_type.name;
 	write_node(alias_type_def, label_ss.str());
 	return false;
 }
