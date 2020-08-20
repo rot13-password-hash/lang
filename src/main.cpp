@@ -26,9 +26,14 @@ using namespace lang::compiler;
 
 int main() {
     std::string source = R"s(
-fn main() -> bool @constructor
+fn test() -> bool
 {
 	return true
+}
+
+fn main() -> bool @constructor
+{
+	return test()
 }
 )s";
 
@@ -47,19 +52,19 @@ fn main() -> bool @constructor
 		cfg_builder::cfg_builder cfg_builder{ root.get() };
 		auto cfg = cfg_builder.build();
 
-		auto* context = new llvm::LLVMContext();
-		auto* builder = new llvm::IRBuilder<>(*context);
+		auto context = std::make_unique<llvm::LLVMContext>();
+		auto builder = std::make_unique<llvm::IRBuilder<>>(*context);
 		auto mod = std::make_unique<llvm::Module>("main", *context);
 
 		for (auto& [func, block] : cfg)
 		{
-			llvm::Function *function = mod->getFunction(func->name);
+			auto function = mod->getFunction(func->name);
 			if (function)
 			{
 				throw std::runtime_error("function redefinition");
 			}
 
-			llvm::FunctionType* func_type = llvm::FunctionType::get(llvm::Type::getIntNTy(*context, sizeof(int)), false);
+			const auto func_type = llvm::FunctionType::get(llvm::Type::getIntNTy(*context, sizeof(int)), false);
 			function = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage, func->name, *mod);
 
 			llvm::BasicBlock *basic_block = llvm::BasicBlock::Create(*context, "entry", function);
@@ -67,6 +72,7 @@ fn main() -> bool @constructor
 
 			for (auto stat : block->body)
 			{
+				
 				stat->gen_code(mod.get(), *builder);
 			}
 
@@ -84,48 +90,38 @@ fn main() -> bool @constructor
 		auto TargetTriple = llvm::Triple(llvm::sys::getDefaultTargetTriple()).get64BitArchVariant();
 		mod->setTargetTriple(TargetTriple.getTriple());
 
-		std::string Error;
-		auto Target = llvm::TargetRegistry::lookupTarget(TargetTriple.getTriple(), Error);
+		std::string error;
+		const auto target = llvm::TargetRegistry::lookupTarget(TargetTriple.getTriple(), error);
 
-		// Print an error and exit if we couldn't find the requested target.
-		// This generally occurs if we've forgotten to initialise the
-		// TargetRegistry or we have a bogus target triple.
-		if (!Target) {
-		llvm::errs() << Error;
-		return 1;
+		if (!target)
+		{
+			llvm::errs() << error;
+			return 1;
 		}
 
-		auto CPU = "generic";
-		auto Features = "";
-
 		llvm::TargetOptions opt;
-		auto RM = llvm::Optional<llvm::Reloc::Model>();
-		auto TheTargetMachine =
-			Target->createTargetMachine(TargetTriple.getTriple(), CPU, Features, opt, RM);
+		auto TheTargetMachine = target->createTargetMachine(TargetTriple.getTriple(), "generic", "", opt, llvm::Optional<llvm::Reloc::Model>());
 
 		mod->setDataLayout(TheTargetMachine->createDataLayout());
 
-		auto Filename = "output.o";
-		std::error_code EC;
-		llvm::raw_fd_ostream dest(Filename, EC, llvm::sys::fs::OF_None);
+		std::error_code ec;
+		llvm::raw_fd_ostream dest("output.o", ec, llvm::sys::fs::OF_None);
 
-		if (EC) {
-		llvm::errs() << "Could not open file: " << EC.message();
-		return 1;
+		if (ec)
+		{
+			llvm::errs() << "Could not open file: " << ec.message();
+			return 1;
 		}
 
 		llvm::legacy::PassManager pass;
-		
-		auto FileType = llvm::CGFT_ObjectFile;
-		if (TheTargetMachine->addPassesToEmitFile(pass, dest, nullptr, FileType, false)) {
-		llvm::errs() << "TheTargetMachine can't emit a file of this type";
-		return 1;
+		if (TheTargetMachine->addPassesToEmitFile(pass, dest, nullptr, llvm::CGFT_ObjectFile, false))
+		{
+			llvm::errs() << "TheTargetMachine can't emit a file of this type";
+			return 1;
 		}
 
 		pass.run(*mod);
 		dest.flush();
-
-		llvm::outs() << "Wrote " << Filename << "\n";
 
 		return 0;
 	}

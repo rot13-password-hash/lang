@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <vector>
+#include <unordered_map>
 
 namespace lang::compiler::ir::cfg
 {
@@ -30,6 +31,6 @@ namespace lang::compiler::ir::cfg
 		std::vector<ast::statement::statement*> body;
 		std::unique_ptr<cf_instruction> cf_instr;
 
-		void add_successor(std::shared_ptr<block> successor); // succ or successor?
+		void add_successor(std::shared_ptr<block> successor);
 	};
 }
