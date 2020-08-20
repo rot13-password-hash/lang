@@ -1,8 +1,9 @@
 #pragma once
 
-#include "ast.h"
+#include "../ast/ast.h"
 
 #include <memory>
+#include <vector>
 
 namespace lang::compiler::ir::cfg
 {

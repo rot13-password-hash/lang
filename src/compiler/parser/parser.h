@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../ir/ast.h"
+#include "../ir/ast/ast.h"
 #include "../lexer/lexer.h"
 #include "../utils/position.h"
 

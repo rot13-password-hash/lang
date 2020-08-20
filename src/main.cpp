@@ -1,7 +1,7 @@
 #include "compiler/lexer/lexer.h"
 #include "compiler/parser/parser.h"
 #include "compiler/utils/exception.h"
-#include "compiler/cfg_builder/cfg_builder.h"
+#include "compiler/ir/cfg/cfg_builder.h"
 
 #include "debug/graphviz.h"
 

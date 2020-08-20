@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../ir/cfg.h"
+#include "../cfg/cfg.h"
+#include "../ast/ast.h"
 
 namespace lang::compiler::cfg_builder
 {

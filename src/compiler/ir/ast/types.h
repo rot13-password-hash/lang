@@ -1,4 +1,6 @@
 #include <unordered_map>
+#include <string>
+#include <memory>
 
 namespace lang::compiler::ir::types
 {

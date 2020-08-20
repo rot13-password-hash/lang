@@ -1,6 +1,7 @@
 #include "code_gen.h"
 
 #include "../utils/exception.h"
+#include "../ir/ast/ast.h"
 
 #include <llvm/ADT/APFloat.h>
 #include <llvm/ADT/STLExtras.h>

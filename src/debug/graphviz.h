@@ -2,7 +2,7 @@
 #include <string>
 #include <sstream>
 
-#include "../compiler/ir/ast.h"
+#include "../compiler/ir/ast/ast.h"
 
 class graphvizitor : public lang::compiler::ir::ast::visitor
 {

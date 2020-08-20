@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <string>
 
-#include "../../ir/ast.h"
+#include "../../ir/ast/ast.h"
 
 namespace lang::compiler::parser
 {

@@ -12,7 +12,7 @@
 #include <llvm/IR/Value.h>
 
 
-#include "../utils/position.h"
+#include "../../utils/position.h"
 #include "types.h"
 
 namespace lang::compiler::ir::ast
