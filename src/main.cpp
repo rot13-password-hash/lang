@@ -34,6 +34,11 @@ fn a() -> void @constructor
 	return
 }
 
+fn b() -> bool
+{
+	return true
+}
+	
 fn main() -> void @export
 {
 	return

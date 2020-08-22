@@ -1,13 +1,14 @@
 #include "code_gen.h"
 
 #include "../utils/exception.h"
-#include "function_collector.h"
 
 #include <llvm/IR/Verifier.h>
 #include <llvm/Transforms/Utils/ModuleUtils.h>
 
 #include <cmath>
 #include <array>
+
+#include "../parser/passes/function_collector.h"
 
 static_assert(sizeof(float) == 4, "float size non standard");
 static_assert(sizeof(double) == 8, "double size non standard");
