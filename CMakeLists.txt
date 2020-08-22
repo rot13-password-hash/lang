@@ -21,8 +21,8 @@ add_executable(lang
     src/compiler/ir/ast/ast.cpp
     src/compiler/ir/cfg/cfg.cpp
     src/debug/graphviz.cpp
-    src/compiler/ir/cfg/cfg_builder.cpp 
-    src/compiler/parser/passes/function_collector.cpp)
+    src/compiler/ir/cfg/cfg_builder.cpp
+    src/compiler/code_gen/function_collector.cpp)
 
 add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
 

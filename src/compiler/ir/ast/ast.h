@@ -8,8 +8,7 @@
 #include <optional>
 #include <variant>
 #include <vector>
-#include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/Value.h>
+#include <unordered_set>
 
 
 #include "../../utils/position.h"
@@ -185,12 +184,12 @@ namespace lang::compiler::ir::ast
 			std::string name;
 			std::vector<var> arguments;
 			type_reference return_type;
-			std::vector<std::string> attributes;
+			std::unordered_set<std::string> attributes;
 
 			std::unique_ptr<block> body_stat;
 
 			function_definition(position_range range, std::string name, std::vector<var> arguments, type return_type,
-				std::vector<std::string> attributes, std::unique_ptr<block> body_stat) :
+				std::unordered_set<std::string> attributes, std::unique_ptr<block> body_stat) :
 				restricted_statement(range),
 				name(std::move(name)),
 				arguments(std::move(arguments)),
@@ -257,6 +256,15 @@ namespace lang::compiler::ir::ast
 			void visit(visitor* vst);
 		};
 	}
+
+	struct module
+	{
+		module(std::string relative_path, std::unique_ptr<statement::restricted_block> body)
+			: relative_path(std::move(relative_path)), body(std::move(body)) {}
+
+		std::string relative_path;
+		std::unique_ptr<statement::restricted_block> body;
+	};
 
 #define BASE_VISITOR(c) virtual bool visit(c* a) { return true; }
 #define VISITOR(b, c) virtual bool visit(c* a) { return visit(static_cast<b*>(a)); }

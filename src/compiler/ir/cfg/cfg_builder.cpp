@@ -27,7 +27,7 @@ struct cfg_visitor : ir::ast::visitor
 	{
 		if (!current)
 		{
-			throw std::runtime_error("Fuck");
+			throw std::runtime_error("oh no");
 		}
 		current->body.push_back(node);
 		return false;
@@ -48,11 +48,13 @@ struct cfg_visitor : ir::ast::visitor
 	}
 };
 
-std::vector<std::pair<ir::ast::statement::function_definition*, std::shared_ptr<ir::cfg::block>>> cfg_builder::cfg_builder::build()
+cfg_builder::function_block_map cfg_builder::cfg_builder::build()
 {
 	std::vector<std::pair<ir::ast::statement::function_definition*, std::shared_ptr<ir::cfg::block>>> function_blocks;
 	cfg_visitor visitor{ function_blocks };
 	root->visit(&visitor);
 
-	return function_blocks;
+	function_block_map block;
+	
+	return block;//function_blocks;
 }

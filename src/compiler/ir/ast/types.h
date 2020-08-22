@@ -10,6 +10,8 @@ namespace lang::compiler::ir::types
 
 		type_descriptor(std::string name) :
 			name(std::move(name)) {}
+
+		virtual ~type_descriptor() = default;
 	};
 	
 	struct type_reference

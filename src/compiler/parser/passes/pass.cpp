@@ -20,7 +20,7 @@ namespace lang::compiler::parser
 	{
 		std::vector<std::unique_ptr<pass>> passes{};
 		passes.emplace_back(std::make_unique<type_analyzer>());
-
+			;
 		for (const auto& pass : passes)
 		{
 			pass->invoke_single(root);

@@ -200,10 +200,10 @@ std::unique_ptr<ir::ast::statement::function_definition> parser::parser::parse_f
 		return_type.is_optional = false;
 	}
 
-	std::vector<std::string> attributes;
+	std::unordered_set<std::string> attributes;
 	while (lexer.current_lexeme().type == lexeme_type::attribute)
 	{
-		attributes.emplace_back(lexer.current_lexeme().value);
+		attributes.insert(std::string{ lexer.current_lexeme().value });
 		lexer.next_lexeme();
 	}
 
