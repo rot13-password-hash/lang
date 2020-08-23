@@ -1,5 +1,6 @@
 #include "compiler/compiler.h"
 #include "compiler/utils/exception.h"
+#include "compiler/utils/error.h"
 
 #include "debug/graphviz.h"
 
@@ -36,7 +37,12 @@ int main(int argc, char* argv[])
 		opt.input_file_path = input_filename.getValue();
 
 		compiler c{ argv[0], std::move(opt) };
-		c.compile();
+		llvm::handleAllErrors(c.compile(),
+			[](const error_info& err)
+			{
+				err.log(llvm::errs());
+				llvm::errs() << '\n';
+			});
 		return 0;
 	}
 	catch (const exception& ex)

@@ -142,7 +142,11 @@ llvm::Expected<std::unique_ptr<ir::ast::expression::call>> parser::parser::parse
 
 		arguments = std::move(*expr_list);
 	}
-	expect(lexeme_type::symb_close_parenthesis, true);
+
+	if (auto err = expect(lexeme_type::symb_close_parenthesis, true))
+	{
+		return std::move(err);
+	}
 	
 	return std::make_unique<ir::ast::expression::call>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(func), std::move(arguments));
 }
@@ -202,7 +206,7 @@ llvm::Expected<std::unique_ptr<ir::ast::expression::expression>> parser::parser:
 		{
 			std::stringstream error_message;
 			error_message << "expected expression, got " << lexer.current_lexeme().to_string();
-			throw exception{ start, error_message.str() };
+			return llvm::make_error<error_info>("", start, error_message.str());
 		}
 	}
 }
@@ -222,7 +226,10 @@ llvm::Expected<std::unique_ptr<ir::ast::expression::expression>> parser::parser:
 				return expr.takeError();
 			}
 
-			expect(lexeme_type::symb_close_parenthesis, true);
+			if (auto err = expect(lexeme_type::symb_close_parenthesis, true))
+			{
+				return std::move(err);
+			}
 			return std::move(*expr);
 		}
 		case lexeme_type::identifier:
@@ -235,7 +242,7 @@ llvm::Expected<std::unique_ptr<ir::ast::expression::expression>> parser::parser:
 		{
 			std::stringstream error_message;
 			error_message << "expected '(' or identifier, got " << lexer.current_lexeme().to_string();
-			throw exception{ lexer.current_lexeme().pos, error_message.str() };
+			return llvm::make_error<error_info>("", lexer.current_lexeme().pos, error_message.str());
 		}
 	}
 }
@@ -244,20 +251,30 @@ llvm::Expected<std::unique_ptr<ir::ast::statement::function_definition>> parser:
 {
 	position start = lexer.current_lexeme().pos;
 	lexer.next_lexeme();
-	expect(lexeme_type::identifier);
+	if (auto err = expect(lexeme_type::identifier))
+	{
+		return std::move(err);
+	}
 
 	// store function name
 	const auto function_name = lexer.current_lexeme().value;
 	lexer.next_lexeme();
 
-	expect(lexeme_type::symb_open_parenthesis, true);
+	if (auto err = expect(lexeme_type::symb_open_parenthesis, true))
+	{
+		return std::move(err);
+	}
+
 	auto arg_list = parse_var_list();
 	if (!arg_list)
 	{
 		return arg_list.takeError();
 	}
 
-	expect(lexeme_type::symb_close_parenthesis, true);
+	if (auto err = expect(lexeme_type::symb_close_parenthesis, true))
+	{
+		return std::move(err);
+	}
 
 	ir::ast::type return_type {};
 	if (lexer.current_lexeme().type == lexeme_type::symb_arrow) // return type
@@ -284,7 +301,11 @@ llvm::Expected<std::unique_ptr<ir::ast::statement::function_definition>> parser:
 		lexer.next_lexeme();
 	}
 
-	expect(lexeme_type::symb_open_brace);
+	if (auto err = expect(lexeme_type::symb_open_brace, true))
+	{
+		return std::move(err);
+	}
+
 	auto block = parse_block_stat();
 	if (!block)
 	{
@@ -298,8 +319,10 @@ llvm::Expected<std::unique_ptr<ir::ast::statement::function_definition>> parser:
 llvm::Expected<std::unique_ptr<ir::ast::statement::type_definition>> parser::parser::parse_type_definition_stat()
 {
 	lexer.next_lexeme();
-	expect(lexeme_type::identifier);
-
+	if (auto err = expect(lexeme_type::identifier, true))
+	{
+		return std::move(err);
+	}
 	const auto start = lexer.current_lexeme().pos;
 	const auto type_name = std::string{ lexer.current_lexeme().value };
 
@@ -333,7 +356,10 @@ llvm::Expected<std::unique_ptr<ir::ast::statement::type_definition>> parser::par
 					const auto field_name = std::string{ lexer.current_lexeme().value };
 					lexer.next_lexeme();
 
-					expect(lexeme_type::symb_colon, true);
+					if (auto err = expect(lexeme_type::symb_colon, true))
+					{
+						return std::move(err);
+					}
 
 					auto type = parse_type();
 					if (!type)
@@ -354,7 +380,11 @@ llvm::Expected<std::unique_ptr<ir::ast::statement::type_definition>> parser::par
 					body.push_back(std::move(*restricted_stat));
 				}
 			}
-			expect(lexeme_type::symb_close_brace, true);
+
+			if (auto err = expect(lexeme_type::symb_close_brace, true))
+			{
+				return std::move(err);
+			}
 
 			auto body_stat = std::make_unique<ir::ast::statement::restricted_block>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(body));
 
@@ -364,7 +394,7 @@ llvm::Expected<std::unique_ptr<ir::ast::statement::type_definition>> parser::par
 		{
 			std::stringstream error_message;
 			error_message << "expected '=' or '{', got " << lexer.current_lexeme().to_string();
-			throw exception{ lexer.current_lexeme().pos, error_message.str() };
+			return llvm::make_error<error_info>("", lexer.current_lexeme().pos, error_message.str());
 		}
 	}
 }
@@ -393,9 +423,12 @@ llvm::Expected<std::unique_ptr<ir::ast::statement::block>> parser::parser::parse
 	position start = lexer.current_lexeme().pos;
 	lexer.next_lexeme();
 
+	llvm::Error err = llvm::Error::success();
+
 	std::vector<std::unique_ptr<ir::ast::statement::statement>> body;
 	while (true)
 	{
+		position stat_start = lexer.current_lexeme().pos;
 		const auto& lexeme = lexer.current_lexeme();
 		if (lexeme.type == lexeme_type::symb_close_brace)
 		{
@@ -421,13 +454,26 @@ llvm::Expected<std::unique_ptr<ir::ast::statement::block>> parser::parser::parse
 				auto expr = parse_expr();
 				if (!expr)
 				{
-					return expr.takeError();
+					err = llvm::joinErrors(std::move(err), expr.takeError());
+
+					while (lexer.current_lexeme().pos.line == stat_start.line
+							&& lexer.current_lexeme().type != lexeme_type::eof)
+					{
+						lexer.next_lexeme();
+					}
+
+					continue;
 				}
 
 				body.push_back(std::make_unique<ir::ast::statement::expression_statement>(
-					ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(*expr)));
+					ir::ast::position_range{ stat_start, lexer.current_lexeme().pos }, std::move(*expr)));
 			}
 		}
+	}
+
+	if (err)
+	{
+		return std::move(err);
 	}
 
 	return std::make_unique<ir::ast::statement::block>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(body));
@@ -451,7 +497,7 @@ llvm::Expected<std::unique_ptr<ir::ast::statement::restricted_statement>> parser
 		{
 			std::stringstream error_message;
 			error_message << "unexpected identifier " << lexeme.to_string() << " in restricted namespace, expected a type or function definition";
-			throw exception{ lexer.current_lexeme().pos, error_message.str() };
+			return llvm::make_error<error_info>("", lexer.current_lexeme().pos, error_message.str());
 		}
 	}
 }

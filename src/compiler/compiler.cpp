@@ -107,7 +107,7 @@ llvm::Error compiler::compile()
 	code_gen::code_gen gen{ types, context, root_module };
 	auto llvm_root_module = gen.gen_code();
 
-	std::string constructor = root_module.relative_path + "@constructor";
+	std::string constructor = root_module.relative_path + "@@constructor";
 	if (!llvm_root_module->getFunction(constructor))
 	{
 		throw std::runtime_error("main module must have constructor");

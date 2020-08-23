@@ -306,13 +306,13 @@ code_gen::code_gen::code_gen(std::unordered_map<ir::types::type_descriptor*, llv
 
 std::shared_ptr<llvm::Module> code_gen::code_gen::gen_code()
 {
-	function_collector collector;
+	symbol_collector collector;
 	mod.body->visit(&collector);
 
 	code_gen_visitor gen{ *this };
 
 	bool constructor_defined = false;
-	for (auto func : collector.collected)
+	for (auto [symbol, func] : collector.collected)
 	{
 		std::string name;
 		llvm::GlobalValue::LinkageTypes linkage;
@@ -322,20 +322,16 @@ std::shared_ptr<llvm::Module> code_gen::code_gen::gen_code()
 		bool is_constructor = func->attributes.find("constructor") != func->attributes.cend();
 
 		// TODO: add type name to function name
-		if (is_constructor && mod.is_root)
+		if ((is_constructor && mod.is_root)
+			|| func->attributes.find("export") != func->attributes.cend())
 		{
 			linkage = llvm::GlobalValue::ExternalLinkage;
-			name = mod.relative_path + "@constructor";
-		}
-		else if (func->attributes.find("export") != func->attributes.cend())
-		{
-			linkage = llvm::GlobalValue::ExternalLinkage;
-			name = mod.relative_path + '@' + func->name;
+			name = mod.relative_path + '@' + symbol;
 		}
 		else
 		{
 			linkage = llvm::GlobalValue::InternalLinkage;
-			name = func->name;
+			name = symbol;
 		}
 
 		llvm::Function *function = llvm_mod->getFunction(name);
