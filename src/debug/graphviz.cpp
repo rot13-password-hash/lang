@@ -1,6 +1,6 @@
 #include "graphviz.h"
 
-using namespace lang::compiler;
+using namespace seam::compiler;
 
 void graphvizitor::write_node(void* id, const std::string& label)
 {
@@ -11,7 +11,7 @@ void graphvizitor::write_node(void* id, const std::string& label)
 	}
 }
 
-std::string graphvizitor::format_type(const lang::compiler::ir::ast::type_reference& type_ref)
+std::string graphvizitor::format_type(const seam::compiler::ir::ast::type_reference& type_ref)
 {
 	std::stringstream ss;
 	std::visit([&ss](auto&& type)
@@ -135,7 +135,7 @@ bool graphvizitor::visit(ir::ast::expression::unresolved_variable* unresolved_va
 	return false;
 }
 
-bool graphvizitor::visit(lang::compiler::ir::ast::statement::function_definition* func_def_stat)
+bool graphvizitor::visit(seam::compiler::ir::ast::statement::function_definition* func_def_stat)
 {
 	std::stringstream label_ss;
 	label_ss << "fn " << func_def_stat->name << '(';

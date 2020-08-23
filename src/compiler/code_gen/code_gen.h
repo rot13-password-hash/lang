@@ -9,7 +9,7 @@
 #include "../ir/ast/ast.h"
 
 
-namespace lang::compiler::code_gen
+namespace seam::compiler::code_gen
 {
 	struct code_gen_visitor;
 
@@ -17,9 +17,9 @@ namespace lang::compiler::code_gen
 	{
 		friend code_gen_visitor;
 
-		ir::ast::module& root;
+		ir::ast::module& mod;
 
-		std::shared_ptr<llvm::Module> mod;
+		std::shared_ptr<llvm::Module> llvm_mod;
 		llvm::IRBuilder<> builder;
 
 		std::unordered_map<ir::types::type_descriptor*, llvm::Type*>& type_map;

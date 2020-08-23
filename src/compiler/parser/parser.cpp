@@ -1,32 +1,39 @@
 #include "parser.h"
 #include "../utils/exception.h"
+#include "../utils/error.h"
 
 #include <iostream>
 #include <sstream>
 
 #include "passes/pass.h"
 
-using namespace lang::compiler;
+using namespace seam::compiler;
 using lexeme_type = lexer::lexeme::lexeme_type;
 
-void parser::parser::expect(lexeme_type type, bool should_consume)
+llvm::Error parser::parser::expect(lexeme_type type, bool should_consume)
 {
 	if (lexer.current_lexeme().type != type)
 	{
 		std::stringstream error_message;
 		error_message << "expected " << lexer::lexeme::to_string(type) << ", got " << lexer.current_lexeme().to_string();
-		throw exception{ lexer.current_lexeme().pos, error_message.str() };
+		return llvm::make_error<error_info>("", lexer.current_lexeme().pos, error_message.str());
 	}
 
 	if (should_consume)
 	{
 		lexer.next_lexeme();
 	}
+
+	return llvm::Error::success();
 }
 
-ir::ast::type parser::parser::parse_type()
+llvm::Expected<ir::ast::type> parser::parser::parse_type()
 {
-	expect(lexeme_type::identifier);
+	if (auto err = expect(lexeme_type::identifier))
+	{
+		return std::move(err);
+	}
+
 	auto target_type_name = std::string{ lexer.current_lexeme().value };
 	lexer.next_lexeme();
 
@@ -34,54 +41,90 @@ ir::ast::type parser::parser::parse_type()
 	{
 		lexer.next_lexeme();
 
-		return { std::move(target_type_name), true };
+		return ir::ast::type{ std::move(target_type_name), true };
 	}
 
-	return { std::move(target_type_name), false };
+	return ir::ast::type{ std::move(target_type_name), false };
 }
 
-ir::ast::var parser::parser::parse_var()
+llvm::Expected<ir::ast::var> parser::parser::parse_var()
 {
 	const auto var_name = std::string{ lexer.current_lexeme().value };
 	lexer.next_lexeme();
-	expect(lexeme_type::symb_colon, true);
-	return ir::ast::var(parse_type(), var_name);
+
+	if (auto err = expect(lexeme_type::symb_colon, true))
+	{
+		return std::move(err);
+	}
+
+	auto type = parse_type();
+	if (!type)
+	{
+		return type.takeError();
+	}
+
+	return ir::ast::var{ *type, var_name };
 }
 
-std::vector<ir::ast::var> parser::parser::parse_var_list()
+llvm::Expected<std::vector<ir::ast::var>> parser::parser::parse_var_list()
 {
 	std::vector<ir::ast::var> var_list;
 
 	if (lexer.current_lexeme().type != lexeme_type::symb_close_parenthesis)
 	{
-		var_list.emplace_back(parse_var());
+		auto first_var = parse_var();
+		if (!first_var)
+		{
+			return first_var.takeError();
+		}
+		var_list.emplace_back(std::move(*first_var));
+
 		while (lexer.current_lexeme().type == lexeme_type::symb_comma)
 		{
 			lexer.next_lexeme();
-			var_list.emplace_back(parse_var());
+
+			auto var = parse_var();
+			if (!var)
+			{
+				return var.takeError();
+			}
+			var_list.emplace_back(std::move(*var));
 		}
 	}
 	
 	return std::move(var_list);
 }
 
-std::vector<std::unique_ptr<ir::ast::expression::expression>> parser::parser::parse_expr_list()
+llvm::Expected<std::vector<std::unique_ptr<ir::ast::expression::expression>>> parser::parser::parse_expr_list()
 {
 	std::vector<std::unique_ptr<ir::ast::expression::expression>> list;
 
-	list.push_back(parse_expr());
+	auto first_expr = parse_expr();
+	if (!first_expr)
+	{
+		return first_expr.takeError();
+	}
+
+	list.push_back(std::move(*first_expr));
 
 	while (lexer.current_lexeme().type == lexeme_type::symb_comma)
 	{
 		lexer.next_lexeme();
-		list.push_back(parse_expr());
+		// TODO: error recovery
+		auto expr = parse_expr();
+		if (!expr)
+		{
+			return expr.takeError();
+		}
+
+		list.push_back(std::move(*expr));
 	}
 
 	return list;
 }
 
 
-std::unique_ptr<ir::ast::expression::call> parser::parser::parse_call_expr_args(std::unique_ptr<ir::ast::expression::expression> func)
+llvm::Expected<std::unique_ptr<ir::ast::expression::call>> parser::parser::parse_call_expr_args(std::unique_ptr<ir::ast::expression::expression> func)
 {
 	const auto start = lexer.current_lexeme().pos;
 
@@ -90,14 +133,21 @@ std::unique_ptr<ir::ast::expression::call> parser::parser::parse_call_expr_args(
 	lexer.next_lexeme();
 	if (lexer.current_lexeme().type != lexeme_type::symb_close_parenthesis)
 	{
-		arguments = parse_expr_list();
+		// TODO: error recovery
+		auto expr_list = parse_expr_list();
+		if (!expr_list)
+		{
+			return expr_list.takeError();
+		}
+
+		arguments = std::move(*expr_list);
 	}
 	expect(lexeme_type::symb_close_parenthesis, true);
-
+	
 	return std::make_unique<ir::ast::expression::call>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(func), std::move(arguments));
 }
 
-std::unique_ptr<ir::ast::expression::expression> parser::parser::parse_expr()
+llvm::Expected<std::unique_ptr<ir::ast::expression::expression>> parser::parser::parse_expr()
 {	
 	const auto start = lexer.current_lexeme().pos;
 	switch (const auto type = lexer.current_lexeme().type)
@@ -121,14 +171,25 @@ std::unique_ptr<ir::ast::expression::expression> parser::parser::parse_expr()
 		case lexeme_type::symb_open_parenthesis:
 		case lexeme_type::identifier:
 		{
-			auto expr = parse_prefix_expr();
+			auto prefix_expr = parse_prefix_expr();
+			if (!prefix_expr)
+			{
+				return prefix_expr.takeError();
+			}
+
+			auto expr = std::move(*prefix_expr);
 			while (lexer.current_lexeme().pos.line == start.line)
 			{
 				switch (lexer.current_lexeme().type)
 				{
 					case lexeme_type::symb_open_parenthesis:
 					{
-						expr = parse_call_expr_args(std::move(expr));
+						auto call_args = parse_call_expr_args(std::move(expr));
+						if (!call_args)
+						{
+							return call_args.takeError();
+						}
+						expr = std::move(*call_args);
 						continue;
 					}
 				}
@@ -146,7 +207,7 @@ std::unique_ptr<ir::ast::expression::expression> parser::parser::parse_expr()
 	}
 }
 
-std::unique_ptr<ir::ast::expression::expression> parser::parser::parse_prefix_expr()
+llvm::Expected<std::unique_ptr<ir::ast::expression::expression>> parser::parser::parse_prefix_expr()
 {
 	const auto start = lexer.current_lexeme().pos;
 
@@ -156,8 +217,13 @@ std::unique_ptr<ir::ast::expression::expression> parser::parser::parse_prefix_ex
 		{
 			lexer.next_lexeme();
 			auto expr = parse_expr();
+			if (!expr)
+			{
+				return expr.takeError();
+			}
+
 			expect(lexeme_type::symb_close_parenthesis, true);
-			return expr;
+			return std::move(*expr);
 		}
 		case lexeme_type::identifier:
 		{
@@ -174,7 +240,7 @@ std::unique_ptr<ir::ast::expression::expression> parser::parser::parse_prefix_ex
 	}
 }
 
-std::unique_ptr<ir::ast::statement::function_definition> parser::parser::parse_function_definition_stat()
+llvm::Expected<std::unique_ptr<ir::ast::statement::function_definition>> parser::parser::parse_function_definition_stat()
 {
 	position start = lexer.current_lexeme().pos;
 	lexer.next_lexeme();
@@ -186,13 +252,24 @@ std::unique_ptr<ir::ast::statement::function_definition> parser::parser::parse_f
 
 	expect(lexeme_type::symb_open_parenthesis, true);
 	auto arg_list = parse_var_list();
+	if (!arg_list)
+	{
+		return arg_list.takeError();
+	}
+
 	expect(lexeme_type::symb_close_parenthesis, true);
 
 	ir::ast::type return_type {};
 	if (lexer.current_lexeme().type == lexeme_type::symb_arrow) // return type
 	{
 		lexer.next_lexeme();
-		return_type = parse_type();
+
+		auto type = parse_type();
+		if (!type)
+		{
+			return type.takeError();
+		}
+		return_type = std::move(*type);
 	}
 	else
 	{
@@ -209,12 +286,16 @@ std::unique_ptr<ir::ast::statement::function_definition> parser::parser::parse_f
 
 	expect(lexeme_type::symb_open_brace);
 	auto block = parse_block_stat();
+	if (!block)
+	{
+		return block.takeError();
+	}
 
-	return std::make_unique<ir::ast::statement::function_definition>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::string{ function_name }, std::move(arg_list),
-		std::move(return_type), std::move(attributes), std::move(block));
+	return std::make_unique<ir::ast::statement::function_definition>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::string{ function_name }, std::move(*arg_list),
+		std::move(return_type), std::move(attributes), std::move(*block));
 }
 
-std::unique_ptr<ir::ast::statement::type_definition> parser::parser::parse_type_definition_stat()
+llvm::Expected<std::unique_ptr<ir::ast::statement::type_definition>> parser::parser::parse_type_definition_stat()
 {
 	lexer.next_lexeme();
 	expect(lexeme_type::identifier);
@@ -231,8 +312,13 @@ std::unique_ptr<ir::ast::statement::type_definition> parser::parser::parse_type_
 			lexer.next_lexeme();
 
 			auto target_type_desc = parse_type();
+			if (!target_type_desc)
+			{
+				return target_type_desc.takeError();
+			}
+
 			return std::make_unique<ir::ast::statement::alias_type_definition>(ir::ast::position_range{ start, lexer.current_lexeme().pos },
-				type_name, target_type_desc);
+				type_name, std::move(*target_type_desc));
 		}
 		case lexeme_type::symb_open_brace: // type <name> { <type block> }
 		{
@@ -250,12 +336,22 @@ std::unique_ptr<ir::ast::statement::type_definition> parser::parser::parse_type_
 					expect(lexeme_type::symb_colon, true);
 
 					auto type = parse_type();
+					if (!type)
+					{
+						return type.takeError();
+					}
 		
-					fields.emplace_back(std::move(type), field_name);
+					fields.emplace_back(std::move(*type), field_name);
 				}
 				else
 				{
-					body.push_back(parse_restricted_stat());
+					auto restricted_stat = parse_restricted_stat();
+					if (!restricted_stat)
+					{
+						return restricted_stat.takeError();
+					}
+
+					body.push_back(std::move(*restricted_stat));
 				}
 			}
 			expect(lexeme_type::symb_close_brace, true);
@@ -273,7 +369,7 @@ std::unique_ptr<ir::ast::statement::type_definition> parser::parser::parse_type_
 	}
 }
 
-std::unique_ptr<ir::ast::statement::ret> parser::parser::parse_return_stat()
+llvm::Expected<std::unique_ptr<ir::ast::statement::ret>> parser::parser::parse_return_stat()
 {
 	const auto start = lexer.current_lexeme().pos;
 	lexer.next_lexeme();
@@ -282,12 +378,17 @@ std::unique_ptr<ir::ast::statement::ret> parser::parser::parse_return_stat()
 	if (lexer.current_lexeme().type != lexeme_type::symb_close_brace
 		&& lexer.current_lexeme().pos.line == start.line)
 	{
-		expr = parse_expr();
+		auto expr_ = parse_expr();
+		if (!expr_)
+		{
+			return expr_.takeError();
+		}
+		expr = std::move(*expr_);
 	}
 	return std::make_unique<ir::ast::statement::ret>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(expr));
 }
 
-std::unique_ptr<ir::ast::statement::block> parser::parser::parse_block_stat()
+llvm::Expected<std::unique_ptr<ir::ast::statement::block>> parser::parser::parse_block_stat()
 {
 	position start = lexer.current_lexeme().pos;
 	lexer.next_lexeme();
@@ -306,14 +407,25 @@ std::unique_ptr<ir::ast::statement::block> parser::parser::parse_block_stat()
 		{
 			case lexeme_type::kw_return:
 			{
-				body.push_back(parse_return_stat());
+				auto return_stat = parse_return_stat();
+				if (!return_stat)
+				{
+					return return_stat.takeError();
+				}
+
+				body.push_back(std::move(*return_stat));
 				break;
 			}
 			default:
 			{
 				auto expr = parse_expr();
+				if (!expr)
+				{
+					return expr.takeError();
+				}
+
 				body.push_back(std::make_unique<ir::ast::statement::expression_statement>(
-					ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(expr)));
+					ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(*expr)));
 			}
 		}
 	}
@@ -321,7 +433,7 @@ std::unique_ptr<ir::ast::statement::block> parser::parser::parse_block_stat()
 	return std::make_unique<ir::ast::statement::block>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(body));
 }
 
-std::unique_ptr<ir::ast::statement::restricted_statement> parser::parser::parse_restricted_stat()
+llvm::Expected<std::unique_ptr<ir::ast::statement::restricted_statement>> parser::parser::parse_restricted_stat()
 {
 	const auto& lexeme = lexer.current_lexeme();
 
@@ -344,7 +456,7 @@ std::unique_ptr<ir::ast::statement::restricted_statement> parser::parser::parse_
 	}
 }
 
-std::unique_ptr<ir::ast::statement::restricted_block> parser::parser::parse_block_restricted_stat()
+llvm::Expected<std::unique_ptr<ir::ast::statement::restricted_block>> parser::parser::parse_block_restricted_stat()
 {
 	const auto start = lexer.current_lexeme().pos;
 	
@@ -359,19 +471,34 @@ std::unique_ptr<ir::ast::statement::restricted_block> parser::parser::parse_bloc
 			break;
 		}
 
-		body.push_back(parse_restricted_stat());
+		auto restricted_stat = parse_restricted_stat();
+		if (!restricted_stat)
+		{
+			return restricted_stat.takeError();
+		}
+
+		body.push_back(std::move(*restricted_stat));
 	}
 
 	return std::make_unique<ir::ast::statement::restricted_block>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(body));
 }
 
-std::unique_ptr<ir::ast::statement::restricted_block> parser::parser::parse()
+llvm::Expected<std::unique_ptr<ir::ast::statement::restricted_block>> parser::parser::parse()
 {
 	lexer.next_lexeme();
 
 	auto root = parse_block_restricted_stat();
-	expect(lexeme_type::eof);
-	pass::invoke_all(root.get());
+	if (!root)
+	{
+		return root.takeError();
+	}
+
+	if (auto err = expect(lexeme_type::eof))
+	{
+		return std::move(err);
+	}
+
+	pass::invoke_all(root->get());
 
 	return root;
 }

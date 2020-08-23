@@ -1,6 +1,6 @@
 #include "ast.h"
 
-namespace lang::compiler::ir::ast
+namespace seam::compiler::ir::ast
 {
 	void expression::call::visit_children(visitor* vst)
 	{

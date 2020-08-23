@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
+cmake_policy(SET CMP0091 NEW)
 set(CMAKE_CXX_STANDARD 17)
 
 project(lang)
@@ -22,14 +23,18 @@ add_executable(lang
     src/compiler/ir/cfg/cfg.cpp
     src/debug/graphviz.cpp
     src/compiler/ir/cfg/cfg_builder.cpp
-    src/compiler/parser/passes/function_collector.cpp)
+    src/compiler/parser/passes/function_collector.cpp
+    src/compiler/compiler.cpp
+    src/compiler/utils/error.cpp)
 
 add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
 
 # Find the libraries that correspond to the LLVM components
 # that we wish to use
-llvm_map_components_to_libnames(llvm_libs support core irreader x86codegen x86asmparser x86desc x86info x86utils)
+llvm_map_components_to_libnames(llvm_libs support core irreader ${LLVM_TARGETS_TO_BUILD})
 
 # Link against LLVM libraries
 target_link_libraries(lang ${llvm_libs})
-# target_compile_options(lang PUBLIC -fno-rtti)
+
+#set_property(TARGET lang PROPERTY
+#             MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

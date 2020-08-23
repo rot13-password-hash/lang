@@ -1,8 +1,10 @@
+#pragma once
+
 #include <unordered_map>
 #include <string>
 #include <memory>
 
-namespace lang::compiler::ir::types
+namespace seam::compiler::ir::types
 {
 	struct type_descriptor
 	{

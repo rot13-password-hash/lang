@@ -4,7 +4,7 @@
 
 #include <vector>
 
-namespace lang::compiler::parser
+namespace seam::compiler::parser
 {
 	bool pass::invoke(ir::ast::statement::restricted_block* root)
 	{

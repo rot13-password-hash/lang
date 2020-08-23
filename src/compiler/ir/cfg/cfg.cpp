@@ -1,6 +1,6 @@
 #include "cfg.h"
 
-using namespace lang::compiler;
+using namespace seam::compiler;
 
 void ir::cfg::block::add_successor(std::shared_ptr<block> succ)
 {

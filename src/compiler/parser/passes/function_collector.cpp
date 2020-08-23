@@ -1,6 +1,6 @@
 #include "function_collector.h"
 
-using namespace lang::compiler;
+using namespace seam::compiler;
 
 bool code_gen::function_collector::visit(ir::ast::statement::function_definition* node)
 {
@@ -9,6 +9,7 @@ bool code_gen::function_collector::visit(ir::ast::statement::function_definition
 	return true;
 }
 
+/*
 bool code_gen::function_collector::visit(ir::ast::statement::class_type_definition* node)
 {
 	for (const auto& func_def : node->body->body)
@@ -17,4 +18,4 @@ bool code_gen::function_collector::visit(ir::ast::statement::class_type_definiti
 	}
 
 	return true;
-}
+}*/

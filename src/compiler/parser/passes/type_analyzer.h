@@ -2,7 +2,7 @@
 
 #include "pass.h"
 
-namespace lang::compiler::parser
+namespace seam::compiler::parser
 {
 	class type_analyzer : public pass
 	{

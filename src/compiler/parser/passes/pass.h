@@ -5,7 +5,7 @@
 
 #include "../../ir/ast/ast.h"
 
-namespace lang::compiler::parser
+namespace seam::compiler::parser
 {
 	struct pass
 	{

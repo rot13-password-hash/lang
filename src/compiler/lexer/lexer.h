@@ -6,7 +6,7 @@
 #include <string_view>
 #include <cstddef>
 
-namespace lang::compiler::lexer
+namespace seam::compiler::lexer
 {
 	class lexer
 	{

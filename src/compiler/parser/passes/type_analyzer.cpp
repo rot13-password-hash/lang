@@ -5,7 +5,7 @@
 
 #include "../../utils/exception.h"
 
-namespace lang::compiler::parser
+namespace seam::compiler::parser
 {
 	class type_collector : public ir::ast::visitor
 	{
@@ -82,7 +82,7 @@ namespace lang::compiler::parser
 	{
 		std::unordered_map<std::string, std::shared_ptr<ir::types::type_descriptor>>& type_map;
 
-		void resolve_type(const lang::compiler::position& pos, ir::ast::type_reference& type_ref)
+		void resolve_type(const seam::compiler::position& pos, ir::ast::type_reference& type_ref)
 		{
 			auto& type = std::get<ir::ast::type>(type_ref);
 

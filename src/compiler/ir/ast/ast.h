@@ -14,7 +14,7 @@
 #include "../../utils/position.h"
 #include "types.h"
 
-namespace lang::compiler::ir::ast
+namespace seam::compiler::ir::ast
 {
 	struct position_range
 	{
@@ -259,11 +259,12 @@ namespace lang::compiler::ir::ast
 
 	struct module
 	{
-		module(std::string relative_path, std::unique_ptr<statement::restricted_block> body)
-			: relative_path(std::move(relative_path)), body(std::move(body)) {}
+		module(std::string relative_path, std::unique_ptr<statement::restricted_block> body, bool is_root)
+			: relative_path(std::move(relative_path)), body(std::move(body)), is_root(is_root) {}
 
 		std::string relative_path;
 		std::unique_ptr<statement::restricted_block> body;
+		bool is_root; // is this module the file being compiled?
 	};
 
 #define BASE_VISITOR(c) virtual bool visit(c* a) { return true; }

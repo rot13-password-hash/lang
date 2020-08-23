@@ -1,8 +1,8 @@
 #pragma once
 
-#include <stddef.h>
+#include <cstddef>
 
-namespace lang::compiler
+namespace seam::compiler
 {
 	struct position
 	{

@@ -5,9 +5,9 @@
 
 #include "position.h"
 
-namespace lang::compiler
+namespace seam::compiler
 {
-	struct exception : public std::runtime_error
+	struct exception : std::runtime_error
 	{
 		position pos;
 

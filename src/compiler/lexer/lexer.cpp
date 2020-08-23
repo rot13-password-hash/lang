@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <iostream>
 
-namespace lang::compiler::lexer
+namespace seam::compiler::lexer
 {
 	bool is_start_identifier_char(const char value)
 	{

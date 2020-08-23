@@ -6,7 +6,7 @@
 #include <vector>
 #include <unordered_map>
 
-namespace lang::compiler::ir::cfg
+namespace seam::compiler::ir::cfg
 {
 	struct cf_instruction
 	{

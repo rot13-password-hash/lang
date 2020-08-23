@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include <stdexcept>
 
-using namespace lang::compiler;
+using namespace seam::compiler;
 
 struct cfg_visitor : ir::ast::visitor
 {

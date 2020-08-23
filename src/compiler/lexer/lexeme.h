@@ -6,7 +6,7 @@
 
 #include "../utils/position.h"
 
-namespace lang::compiler::lexer
+namespace seam::compiler::lexer
 {
 	struct lexeme
 	{
