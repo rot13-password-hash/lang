@@ -23,9 +23,10 @@ add_executable(lang
     src/compiler/ir/cfg/cfg.cpp
     src/debug/graphviz.cpp
     src/compiler/ir/cfg/cfg_builder.cpp
-    src/compiler/parser/passes/function_collector.cpp
+    src/compiler/parser/passes/symbol_collector.cpp
     src/compiler/compiler.cpp
-    src/compiler/utils/error.cpp)
+    src/compiler/utils/error.cpp 
+    src/compiler/parser/passes/variable_resolver.cpp)
 
 add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
 

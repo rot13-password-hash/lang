@@ -25,6 +25,7 @@ namespace seam::compiler::lexer
 	
 	const lexeme_map_t symbol_map
 	{
+		{ ":=", lexeme::lexeme_type::symb_declare },
 		{ "+", lexeme::lexeme_type::symb_add },
 		{ "+=", lexeme::lexeme_type::symb_add_assign },
 		{ "-", lexeme::lexeme_type::symb_minus },
@@ -47,6 +48,7 @@ namespace seam::compiler::lexer
 	const lexeme_map_t keyword_map
 	{
 		{ "fn", lexeme::lexeme_type::kw_fn },
+		{ "extern", lexeme::lexeme_type::kw_extern },
 		{ "as", lexeme::lexeme_type::kw_as },
 		{ "return", lexeme::lexeme_type::kw_return },
 		{ "type", lexeme::lexeme_type::kw_type },

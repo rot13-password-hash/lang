@@ -14,7 +14,7 @@
 using namespace seam::compiler;
 
 void compiler::link(const std::vector<llvm::StringRef>& object_files, const llvm::StringRef& entry, const llvm::StringRef& output)
-{
+{ // ../lld-link.exe test.o Test.lib /OUT:test.exe /ENTRY:test@@constructor
 	// TODO: escape file names so it supports path with spaces
 	std::filesystem::path p = argv0;
 	p.replace_filename("lld-link.exe");
@@ -92,21 +92,27 @@ llvm::Error compiler::compile()
 
 	std::filesystem::create_directories(opt.output_directory_path);
 
+	std::string input_filename = opt.input_file_path.stem().string();
+	if (!opt.input_file_path.has_extension() || opt.input_file_path.extension() != ".sm")
+	{
+		throw std::runtime_error("file '" + opt.input_file_path.string() + "' has the incorrect extension");
+	}
+	
 	std::ifstream root_module_file{ opt.input_file_path, std::ios::binary | std::ios::in };
 	std::string root_module_source{ std::istreambuf_iterator{ root_module_file }, {} };
 
-	parser::parser parser{ root_module_source };
+	parser::parser parser{ input_filename, root_module_source };
 	auto root_module_block = parser.parse();
 	if (!root_module_block)
 	{
 		return root_module_block.takeError();
 	}
 
-	ir::ast::module root_module{ opt.input_file_path.stem().string(), std::move(*root_module_block), true };
+	ir::ast::module root_module{ input_filename, std::move(*root_module_block), true };
 
 	code_gen::code_gen gen{ types, context, root_module };
 	auto llvm_root_module = gen.gen_code();
-
+	
 	std::string constructor = root_module.relative_path + "@@constructor";
 	if (!llvm_root_module->getFunction(constructor))
 	{
@@ -132,6 +138,10 @@ llvm::Error compiler::compile()
 	if (!opt.no_link)
 	{
 		auto llvm_root_module_executable_path = (opt.output_directory_path / (root_module.relative_path + ".exe")).string();
-		link({ llvm_root_module_object_path, /* TODO: standard library */ }, constructor, llvm_root_module_executable_path);
+		auto test_lib = std::filesystem::absolute(opt.output_directory_path / "Test.lib").string();
+		llvm::outs() << test_lib << '\n';
+		link({ llvm_root_module_object_path, test_lib /* TODO: standard library */ }, constructor, llvm_root_module_executable_path);
 	}
+
+	return llvm::Error::success();
 }

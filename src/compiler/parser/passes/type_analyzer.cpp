@@ -97,6 +97,17 @@ namespace seam::compiler::parser
 			type_ref = ir::types::type_reference{ type_desc_it->second, type.is_optional };
 		}
 	public:
+		bool visit(ir::ast::statement::extern_definition* node)
+		{
+			for (auto& argument : node->arguments)
+			{
+				resolve_type(node->range.start, argument.type_);
+			}
+
+			resolve_type(node->range.start, node->return_type);
+			return true;
+		}
+
 		bool visit(ir::ast::statement::function_definition* node)
 		{
 			for (auto& argument : node->arguments)

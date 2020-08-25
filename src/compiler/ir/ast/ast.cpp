@@ -25,7 +25,50 @@ namespace seam::compiler::ir::ast
 		vst->visit(this);
 	}
 
+	void expression::variable::visit_children(visitor* vst)
+	{
+		var->visit(vst);
+	}
 
+	void expression::variable::visit(visitor* vst)
+	{
+		if (vst->visit(this))
+		{
+			visit_children(vst);
+		}
+	}
+
+	void expression::function_variable::visit(visitor* vst)
+	{
+		vst->visit(this);
+	}
+	
+
+	void statement::variable_declaration::visit_children(visitor* vst)
+	{
+		value->visit(vst);
+	}
+
+	void statement::variable_declaration::visit(visitor* vst)
+	{
+		if (vst->visit(this))
+		{
+			visit_children(vst);
+		}
+	}
+
+	void statement::variable_assignment::visit_children(visitor* vst)
+	{
+		value->visit(vst);
+	}
+
+	void statement::variable_assignment::visit(visitor* vst)
+	{
+		if (vst->visit(this))
+		{
+			visit_children(vst);
+		}
+	}
 
 	void statement::expression_statement::visit_children(visitor* vst)
 	{
@@ -57,6 +100,11 @@ namespace seam::compiler::ir::ast
 		}
 	}
 
+	void statement::extern_definition::visit(visitor* vst)
+	{
+		vst->visit(this);
+	}
+
 	void statement::function_definition::visit_children(visitor* vst)
 	{
 		body_stat->visit(vst);
@@ -74,8 +122,6 @@ namespace seam::compiler::ir::ast
 	{
 		vst->visit(this);
 	}
-
-
 
 	void statement::class_type_definition::visit_children(visitor* vst)
 	{

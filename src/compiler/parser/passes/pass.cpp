@@ -4,6 +4,8 @@
 
 #include <vector>
 
+#include "variable_resolver.h"
+
 namespace seam::compiler::parser
 {
 	bool pass::invoke(ir::ast::statement::restricted_block* root)
@@ -20,7 +22,7 @@ namespace seam::compiler::parser
 	{
 		std::vector<std::unique_ptr<pass>> passes{};
 		passes.emplace_back(std::make_unique<type_analyzer>());
-			;
+		
 		for (const auto& pass : passes)
 		{
 			pass->invoke_single(root);

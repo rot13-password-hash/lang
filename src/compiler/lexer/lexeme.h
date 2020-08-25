@@ -22,6 +22,7 @@ namespace seam::compiler::lexer
 
 			// keywords
 			kw_fn,
+			kw_extern,
 			kw_as,
 			kw_return,
 			kw_type,
@@ -33,6 +34,7 @@ namespace seam::compiler::lexer
 			kw_false,
 			
 			// symbols
+			symb_declare,
 			symb_add,
 			symb_add_assign,
 			symb_minus,
@@ -77,6 +79,10 @@ namespace seam::compiler::lexer
 				case lexeme_type::kw_fn:
 				{
 					return "'fn'";
+				}
+				case lexeme_type::kw_extern:
+				{
+					return "'extern'";
 				}
 				case lexeme_type::kw_return:
 				{

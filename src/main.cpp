@@ -25,8 +25,10 @@ llvm::cl::opt<std::string> input_filename{ llvm::cl::cat(compiler_category), llv
 
 int main(int argc, char* argv[])
 {
-	try
+	//try
 	{
+		llvm::ExitOnError exitOnErr{};
+
 		llvm::cl::HideUnrelatedOptions(compiler_category);
 		llvm::cl::ParseCommandLineOptions(argc, argv,
 			"Seam LLVM compiler");
@@ -37,22 +39,18 @@ int main(int argc, char* argv[])
 		opt.input_file_path = input_filename.getValue();
 
 		compiler c{ argv[0], std::move(opt) };
-		llvm::handleAllErrors(c.compile(),
-			[](const error_info& err)
-			{
-				err.log(llvm::errs());
-				llvm::errs() << '\n';
-			});
+		exitOnErr(c.compile());
+		
 		return 0;
 	}
-	catch (const exception& ex)
+	/*catch (const exception& ex)
 	{
 		llvm::errs() << ex.pos.line << ':' << ex.pos.col << ": ";
 		llvm::WithColor::error() << ex.what() << '\n';
-	}
-	catch (const std::exception& ex)
+	}*/
+	/*catch (const std::exception& ex)
 	{
 		llvm::WithColor::error();
 		llvm::errs() << ex.what() << '\n';
-	}
+	}*/
 }

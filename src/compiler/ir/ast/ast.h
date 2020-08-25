@@ -82,6 +82,11 @@ namespace seam::compiler::ir::ast
 			type_(std::move(type_)), name(std::move(name)) {}
     };
 
+	namespace statement
+	{
+		struct function_declaration;
+	}
+
 	namespace expression
 	{
 		struct expression : node
@@ -118,6 +123,17 @@ namespace seam::compiler::ir::ast
 			void visit(visitor* vst);
 		};
 
+		struct variable : expression
+		{
+			std::unique_ptr<expression> var;
+
+			variable(position_range range, std::unique_ptr<expression> var) :
+				expression(range), var(std::move(var)) {}
+
+			void visit_children(visitor* vst);
+			void visit(visitor* vst);
+		};
+
 		struct unresolved_variable : expression
 		{
 			std::string name;
@@ -133,9 +149,15 @@ namespace seam::compiler::ir::ast
 
 		};
 
-		struct module_variable : expression
+		struct function_variable : expression
 		{
+			std::string symbol;
+			statement::function_declaration* def_stat;
 
+			function_variable(position_range range, std::string symbol, statement::function_declaration* def_stat) :
+				expression(range), symbol(std::move(symbol)), def_stat(def_stat) {}
+
+			void visit(visitor* vst);
 		};
 	}
 
@@ -149,6 +171,30 @@ namespace seam::compiler::ir::ast
 			virtual ~statement() {};
 		};
 
+		struct variable_declaration : statement // a: int := 1
+		{
+			var variable;
+			std::unique_ptr<expression::expression> value;
+			
+			variable_declaration(position_range range, var variable, std::unique_ptr<expression::expression> value) :
+				statement(range), variable(std::move(variable)), value(std::move(value)) {}
+			
+			void visit_children(visitor* vst);
+			void visit(visitor* vst);
+		};
+
+		struct variable_assignment : statement // a = 2
+		{
+			var variable;
+			std::unique_ptr<expression::expression> value;
+			
+			variable_assignment(position_range range, var variable, std::unique_ptr<expression::expression> value) :
+				statement(range), variable(std::move(variable)), value(std::move(value)) {}
+
+			void visit_children(visitor* vst);
+			void visit(visitor* vst);
+		};
+		
 		struct expression_statement : statement
 		{
 			std::unique_ptr<expression::expression> expr;
@@ -179,22 +225,42 @@ namespace seam::compiler::ir::ast
 			void visit(visitor* vst);
 		};
 
-		struct function_definition : restricted_statement
+		struct function_declaration : restricted_statement
 		{
 			std::string name;
 			std::vector<var> arguments;
 			type_reference return_type;
 			std::unordered_set<std::string> attributes;
 
-			std::unique_ptr<block> body_stat;
-
-			function_definition(position_range range, std::string name, std::vector<var> arguments, type return_type,
-				std::unordered_set<std::string> attributes, std::unique_ptr<block> body_stat) :
+			function_declaration(position_range range, std::string name, std::vector<var> arguments, type return_type,
+				std::unordered_set<std::string> attributes) :
 				restricted_statement(range),
 				name(std::move(name)),
 				arguments(std::move(arguments)),
 				return_type(std::move(return_type)),
-				attributes(std::move(attributes)),
+				attributes(std::move(attributes))
+			{}
+
+			virtual ~function_declaration() {};
+		};
+
+		struct extern_definition : function_declaration
+		{
+			extern_definition(position_range range, std::string name, std::vector<var> arguments, type return_type,
+				std::unordered_set<std::string> attributes) :
+				function_declaration(range, std::move(name), std::move(arguments), std::move(return_type), std::move(attributes))
+			{}
+
+			void visit(visitor* vst);
+		};
+
+		struct function_definition : function_declaration
+		{
+			std::unique_ptr<block> body_stat;
+
+			function_definition(position_range range, std::string name, std::vector<var> arguments, type return_type,
+				std::unordered_set<std::string> attributes, std::unique_ptr<block> body_stat) :
+				function_declaration(range, std::move(name), std::move(arguments), std::move(return_type), std::move(attributes)),
 				body_stat(std::move(body_stat))
 			{}
 
@@ -295,14 +361,20 @@ namespace seam::compiler::ir::ast
 		VISITOR(expression::expression, expression::literal<bool>);
 
 		VISITOR(expression::expression, expression::call);
+		VISITOR(expression::expression, expression::variable);
 		VISITOR(expression::expression, expression::unresolved_variable);
+		VISITOR(expression::expression, expression::function_variable);
 
 		VISITOR(statement::restricted_statement, statement::type_definition);
-		VISITOR(statement::restricted_statement, statement::function_definition)
-
+		VISITOR(statement::restricted_statement, statement::extern_definition);
+		VISITOR(statement::restricted_statement, statement::function_definition);
+			
 		VISITOR(statement::type_definition, statement::alias_type_definition);
 		VISITOR(statement::type_definition, statement::class_type_definition);
 
+		VISITOR(statement::statement, statement::expression_statement);
+		VISITOR(statement::statement, statement::variable_declaration);
+		VISITOR(statement::statement, statement::variable_assignment);
 		VISITOR(statement::statement, statement::block);
 		VISITOR(statement::statement, statement::restricted_block);
 		VISITOR(statement::statement, statement::ret);

@@ -16,7 +16,7 @@ llvm::Error parser::parser::expect(lexeme_type type, bool should_consume)
 	{
 		std::stringstream error_message;
 		error_message << "expected " << lexer::lexeme::to_string(type) << ", got " << lexer.current_lexeme().to_string();
-		return llvm::make_error<error_info>("", lexer.current_lexeme().pos, error_message.str());
+		return llvm::make_error<error_info>(filename, lexer.current_lexeme().pos, error_message.str());
 	}
 
 	if (should_consume)
@@ -206,7 +206,7 @@ llvm::Expected<std::unique_ptr<ir::ast::expression::expression>> parser::parser:
 		{
 			std::stringstream error_message;
 			error_message << "expected expression, got " << lexer.current_lexeme().to_string();
-			return llvm::make_error<error_info>("", start, error_message.str());
+			return llvm::make_error<error_info>(filename, start, error_message.str());
 		}
 	}
 }
@@ -236,15 +236,80 @@ llvm::Expected<std::unique_ptr<ir::ast::expression::expression>> parser::parser:
 		{
 			auto identifier_name = std::string{ lexer.current_lexeme().value };
 			lexer.next_lexeme();
-			return std::make_unique<ir::ast::expression::unresolved_variable>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(identifier_name)); // TODO: resolve local variables
+			auto unresolved_var = std::make_unique<ir::ast::expression::unresolved_variable>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(identifier_name));
+			return std::make_unique<ir::ast::expression::variable>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::move(unresolved_var));
 		}
 		default:
 		{
 			std::stringstream error_message;
 			error_message << "expected '(' or identifier, got " << lexer.current_lexeme().to_string();
-			return llvm::make_error<error_info>("", lexer.current_lexeme().pos, error_message.str());
+			return llvm::make_error<error_info>(filename, lexer.current_lexeme().pos, error_message.str());
 		}
 	}
+}
+
+llvm::Expected<std::unique_ptr<ir::ast::statement::extern_definition>> parser::parser::parse_extern_stat()
+{
+	position start = lexer.current_lexeme().pos;
+	lexer.next_lexeme();
+	
+	if (auto err = expect(lexeme_type::kw_fn, true))
+	{
+		return std::move(err);
+	}
+
+	if (auto err = expect(lexeme_type::identifier))
+	{
+		return std::move(err);
+	}
+
+	// store function name
+	const auto function_name = lexer.current_lexeme().value;
+	lexer.next_lexeme();
+
+	if (auto err = expect(lexeme_type::symb_open_parenthesis, true))
+	{
+		return std::move(err);
+	}
+
+	auto arg_list = parse_var_list();
+	if (!arg_list)
+	{
+		return arg_list.takeError();
+	}
+
+	if (auto err = expect(lexeme_type::symb_close_parenthesis, true))
+	{
+		return std::move(err);
+	}
+
+	ir::ast::type return_type {};
+	if (lexer.current_lexeme().type == lexeme_type::symb_arrow) // return type
+	{
+		lexer.next_lexeme();
+
+		auto type = parse_type();
+		if (!type)
+		{
+			return type.takeError();
+		}
+		return_type = std::move(*type);
+	}
+	else
+	{
+		return_type.name = "void";
+		return_type.is_optional = false;
+	}
+
+	std::unordered_set<std::string> attributes;
+	while (lexer.current_lexeme().type == lexeme_type::attribute)
+	{
+		attributes.insert(std::string{ lexer.current_lexeme().value });
+		lexer.next_lexeme();
+	}
+
+	return std::make_unique<ir::ast::statement::extern_definition>(ir::ast::position_range{ start, lexer.current_lexeme().pos }, std::string{ function_name }, std::move(*arg_list),
+		std::move(return_type), std::move(attributes));
 }
 
 llvm::Expected<std::unique_ptr<ir::ast::statement::function_definition>> parser::parser::parse_function_definition_stat()
@@ -301,7 +366,7 @@ llvm::Expected<std::unique_ptr<ir::ast::statement::function_definition>> parser:
 		lexer.next_lexeme();
 	}
 
-	if (auto err = expect(lexeme_type::symb_open_brace, true))
+	if (auto err = expect(lexeme_type::symb_open_brace))
 	{
 		return std::move(err);
 	}
@@ -394,7 +459,7 @@ llvm::Expected<std::unique_ptr<ir::ast::statement::type_definition>> parser::par
 		{
 			std::stringstream error_message;
 			error_message << "expected '=' or '{', got " << lexer.current_lexeme().to_string();
-			return llvm::make_error<error_info>("", lexer.current_lexeme().pos, error_message.str());
+			return llvm::make_error<error_info>(filename, lexer.current_lexeme().pos, error_message.str());
 		}
 	}
 }
@@ -421,7 +486,7 @@ llvm::Expected<std::unique_ptr<ir::ast::statement::ret>> parser::parser::parse_r
 llvm::Expected<std::unique_ptr<ir::ast::statement::block>> parser::parser::parse_block_stat()
 {
 	position start = lexer.current_lexeme().pos;
-	lexer.next_lexeme();
+	lexer.next_lexeme(); // {
 
 	llvm::Error err = llvm::Error::success();
 
@@ -465,6 +530,61 @@ llvm::Expected<std::unique_ptr<ir::ast::statement::block>> parser::parser::parse
 					continue;
 				}
 
+				ir::ast::expression::variable* var_expr;
+				if (lexer.current_lexeme().type == lexeme_type::symb_colon
+					&& (var_expr = dynamic_cast<ir::ast::expression::variable*>(expr.get().get()))) // var_def
+				{
+					lexer.next_lexeme();
+					auto type = parse_type();
+					if (!type)
+					{
+						err = llvm::joinErrors(std::move(err), type.takeError());
+
+						while (lexer.current_lexeme().pos.line == stat_start.line
+								&& lexer.current_lexeme().type != lexeme_type::eof)
+						{
+							lexer.next_lexeme();
+						}
+						continue;
+					}
+					
+					auto expect_err = expect(lexeme_type::symb_declare, true);
+					if (expect_err)
+					{
+						err = llvm::joinErrors(std::move(err), std::move(expect_err));
+						while (lexer.current_lexeme().pos.line == stat_start.line
+								&& lexer.current_lexeme().type != lexeme_type::eof)
+						{
+							lexer.next_lexeme();
+						}
+						continue;
+					}
+					
+					auto value_expr = parse_expr();
+					if (!value_expr)
+					{
+						err = llvm::joinErrors(std::move(err), value_expr.takeError());;
+						while (lexer.current_lexeme().pos.line == stat_start.line
+								&& lexer.current_lexeme().type != lexeme_type::eof)
+						{
+							lexer.next_lexeme();
+						}
+						continue;
+					}
+
+					body.push_back(std::make_unique<ir::ast::statement::variable_declaration>(
+						ir::ast::position_range{ stat_start, lexer.current_lexeme().pos },
+						ir::ast::var{ *type, reinterpret_cast<ir::ast::expression::unresolved_variable*>(var_expr->var.get())->name },
+						std::move(*value_expr)));
+					
+					continue;
+				}
+
+				if (lexer.current_lexeme().type == lexeme_type::symb_equals) // expresison perhaps?
+				{
+					continue;
+				}
+
 				body.push_back(std::make_unique<ir::ast::statement::expression_statement>(
 					ir::ast::position_range{ stat_start, lexer.current_lexeme().pos }, std::move(*expr)));
 			}
@@ -489,6 +609,10 @@ llvm::Expected<std::unique_ptr<ir::ast::statement::restricted_statement>> parser
 		{
 			return parse_function_definition_stat();
 		}
+		case lexeme_type::kw_extern:
+		{
+			return parse_extern_stat();
+		}
 		case lexeme_type::kw_type:
 		{
 			return parse_type_definition_stat();
@@ -497,7 +621,7 @@ llvm::Expected<std::unique_ptr<ir::ast::statement::restricted_statement>> parser
 		{
 			std::stringstream error_message;
 			error_message << "unexpected identifier " << lexeme.to_string() << " in restricted namespace, expected a type or function definition";
-			return llvm::make_error<error_info>("", lexer.current_lexeme().pos, error_message.str());
+			return llvm::make_error<error_info>(filename, lexer.current_lexeme().pos, error_message.str());
 		}
 	}
 }

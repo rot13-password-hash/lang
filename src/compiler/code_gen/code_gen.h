@@ -27,8 +27,9 @@ namespace seam::compiler::code_gen
 		llvm::Type* get_llvm_type(ir::types::type_descriptor* type_desc);
 		llvm::Type* get_llvm_type(ir::types::type_reference& type_ref);
 
-		llvm::FunctionType* get_llvm_function_type(ir::ast::statement::function_definition* func_def);
+		llvm::FunctionType* get_llvm_function_type(ir::ast::statement::function_declaration* func_def);
 
+		llvm::Function* get_or_declare_function(const std::string& symbol, ir::ast::statement::function_declaration* def_stat);
 	public:
 		code_gen(std::unordered_map<ir::types::type_descriptor*, llvm::Type*>& type_map, llvm::LLVMContext& context, ir::ast::module& root);
 

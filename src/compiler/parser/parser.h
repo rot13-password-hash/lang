@@ -14,6 +14,7 @@ namespace seam::compiler::parser
 {
 	class parser
 	{
+		std::string_view filename;
 		lexer::lexer lexer;
 
 		llvm::Error expect(lexer::lexeme::lexeme_type type, bool should_consume = false);
@@ -28,6 +29,7 @@ namespace seam::compiler::parser
 		llvm::Expected<std::unique_ptr<ir::ast::expression::expression>> parse_expr();
 		llvm::Expected<std::unique_ptr<ir::ast::expression::expression>> parse_prefix_expr();
 
+		llvm::Expected<std::unique_ptr<ir::ast::statement::extern_definition>> parse_extern_stat();
 		llvm::Expected<std::unique_ptr<ir::ast::statement::function_definition>> parse_function_definition_stat();
 		llvm::Expected<std::unique_ptr<ir::ast::statement::type_definition>> parse_type_definition_stat();
 		llvm::Expected<std::unique_ptr<ir::ast::statement::ret>> parse_return_stat();
@@ -36,8 +38,8 @@ namespace seam::compiler::parser
 		llvm::Expected<std::unique_ptr<ir::ast::statement::restricted_block>> parse_block_restricted_stat();
 
 	public:
-		explicit parser(std::string_view source) :
-			lexer(source)
+		explicit parser(std::string_view filename, std::string_view source) :
+			filename(filename), lexer(source)
 		{}
 
 		llvm::Expected<std::unique_ptr<ir::ast::statement::restricted_block>> parse();
