@@ -20,6 +20,7 @@ namespace seam::compiler::code_gen
 		ir::ast::module& mod;
 
 		std::shared_ptr<llvm::Module> llvm_mod;
+		std::unique_ptr<llvm::DataLayout> data_layout;
 		llvm::IRBuilder<> builder;
 
 		std::unordered_map<ir::types::type_descriptor*, llvm::Type*>& type_map;
@@ -31,7 +32,7 @@ namespace seam::compiler::code_gen
 
 		llvm::Function* get_or_declare_function(const std::string& symbol, ir::ast::statement::function_declaration* def_stat);
 	public:
-		code_gen(std::unordered_map<ir::types::type_descriptor*, llvm::Type*>& type_map, llvm::LLVMContext& context, ir::ast::module& root);
+		code_gen(std::unordered_map<ir::types::type_descriptor*, llvm::Type*>& type_map, llvm::LLVMContext& context, ir::ast::module& root, const std::string& target_triple);
 
 		std::shared_ptr<llvm::Module> gen_code();
 	};

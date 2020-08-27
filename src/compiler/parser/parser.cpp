@@ -384,7 +384,7 @@ llvm::Expected<std::unique_ptr<ir::ast::statement::function_definition>> parser:
 llvm::Expected<std::unique_ptr<ir::ast::statement::type_definition>> parser::parser::parse_type_definition_stat()
 {
 	lexer.next_lexeme();
-	if (auto err = expect(lexeme_type::identifier, true))
+	if (auto err = expect(lexeme_type::identifier))
 	{
 		return std::move(err);
 	}

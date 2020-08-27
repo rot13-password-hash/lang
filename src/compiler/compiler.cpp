@@ -10,6 +10,7 @@
 #include <llvm/Support/Program.h>
 
 #include <fstream>
+#include <llvm\IR\Verifier.h>
 
 using namespace seam::compiler;
 
@@ -110,7 +111,9 @@ llvm::Error compiler::compile()
 
 	ir::ast::module root_module{ input_filename, std::move(*root_module_block), true };
 
-	code_gen::code_gen gen{ types, context, root_module };
+	llvm::Triple target_triple{ llvm::sys::getDefaultTargetTriple() };
+	
+	code_gen::code_gen gen{ types, context, root_module, target_triple.getTriple() };
 	auto llvm_root_module = gen.gen_code();
 	
 	std::string constructor = root_module.relative_path + "@@constructor";
@@ -119,15 +122,16 @@ llvm::Error compiler::compile()
 		throw std::runtime_error("main module must have constructor");
 	}
 
-	llvm::Triple target_triple{ llvm::sys::getDefaultTargetTriple() };
-	llvm_root_module->setTargetTriple(target_triple.getTriple());
-
 	auto llvm_root_module_bitcode_path = (opt.output_directory_path / (root_module.relative_path + ".bc")).string();
 	llvm::raw_fd_ostream llvm_root_module_bitcode{ llvm_root_module_bitcode_path, error_code };
 	if (error_code)
 	{
 		throw std::system_error(error_code);
 	}
+
+	llvm::verifyModule(*llvm_root_module);
+	llvm_root_module->print(llvm::outs(), nullptr);
+	llvm::outs() << '\n';
 	
 	llvm::WriteBitcodeToFile(*llvm_root_module, llvm_root_module_bitcode);
 	llvm_root_module_bitcode.close();
@@ -138,9 +142,9 @@ llvm::Error compiler::compile()
 	if (!opt.no_link)
 	{
 		auto llvm_root_module_executable_path = (opt.output_directory_path / (root_module.relative_path + ".exe")).string();
-		auto test_lib = std::filesystem::absolute(opt.output_directory_path / "Test.lib").string();
-		llvm::outs() << test_lib << '\n';
-		link({ llvm_root_module_object_path, test_lib /* TODO: standard library */ }, constructor, llvm_root_module_executable_path);
+		auto runtime_lib = std::filesystem::absolute(opt.output_directory_path / "seam-runtime.lib").string();
+		llvm::outs() << runtime_lib << '\n';
+		link({ llvm_root_module_object_path, runtime_lib }, constructor, llvm_root_module_executable_path);
 	}
 
 	return llvm::Error::success();

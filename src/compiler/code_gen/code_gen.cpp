@@ -27,7 +27,7 @@ namespace seam::compiler::code_gen
 
 		code_gen& gen;
 
-		llvm::Value* val;
+		llvm::Value* val = nullptr;
 
 		bool visit(ir::ast::node* node) override
 		{
@@ -51,7 +51,29 @@ namespace seam::compiler::code_gen
 
 		bool visit(ir::ast::expression::literal<std::string>* node) override
 		{
-			val = gen.builder.CreateGlobalString(llvm::StringRef(node->val));
+			// TODO: test
+			// TODO: check if getIntNTy takes bits or bytes
+			auto size_type = llvm::Type::getIntNTy(gen.llvm_mod->getContext(), gen.data_layout->getMaxPointerSizeInBits());
+			auto char_array_type = llvm::ArrayType::get(llvm::Type::getInt8Ty(gen.llvm_mod->getContext()), node->val.size());
+
+			std::array<llvm::Type*, 2> struct_fields{ size_type, char_array_type };
+			auto struct_type = llvm::StructType::get(gen.llvm_mod->getContext(), llvm::makeArrayRef(struct_fields), false);
+			auto str_const = llvm::ConstantDataArray::getString(gen.llvm_mod->getContext(), node->val, false);
+
+			auto size_const  = llvm::ConstantInt::get(gen.llvm_mod->getContext(),
+				llvm::APInt(gen.data_layout->getMaxPointerSizeInBits(), node->val.size(), false));
+			auto struct_const = llvm::ConstantStruct::get(struct_type, size_const, str_const);
+			auto global_var = new llvm::GlobalVariable{ *gen.llvm_mod, struct_const->getType(),
+				true, llvm::GlobalValue::PrivateLinkage, struct_const };
+			global_var->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Global);
+			global_var->setAlignment(llvm::Align(1));
+			val = global_var;
+			auto zero = llvm::ConstantInt::get(gen.llvm_mod->getContext(), llvm::APInt(32, 0, true));
+			std::array<llvm::Constant*, 2> indicies = {zero, zero};
+			val = llvm::ConstantExpr::getInBoundsGetElementPtr(global_var->getValueType(), global_var, llvm::makeArrayRef(indicies)); // size_type*
+			/*
+			val->getType()->print(llvm::outs());
+			llvm::outs() << '\n';*/
 			return false;
 		}
 
@@ -236,12 +258,12 @@ llvm::Type* code_gen::code_gen::get_llvm_type(ir::types::type_descriptor* type_d
 		return type_map[type_desc] = llvm::Type::getVoidTy(llvm_mod->getContext());
 	}
 
-	// string, str (immutable)
+	// string (immutable)
 	// 3, "abc"
 	if (dynamic_cast<ir::types::built_in_type_descriptor<std::string>*>(type_desc))
 	{
-		throw std::runtime_error("not implemented");
-		// return type_map[type_desc] = llvm::Type::getStringTy(mod->getContext());
+		// TODO: check if getIntNTy takes bits or bytes
+		return llvm::PointerType::get(llvm::Type::getIntNTy(llvm_mod->getContext(), data_layout->getMaxPointerSizeInBits()), 0);
 	}
 
 	if (dynamic_cast<ir::types::built_in_type_descriptor<bool>*>(type_desc))
@@ -310,7 +332,7 @@ llvm::Type* code_gen::code_gen::get_llvm_type(ir::types::type_reference& type_re
 	if (type_ref.is_optional)
 	{
 		std::array<llvm::Type*, 2> struct_fields { llvm::Type::getInt8Ty(llvm_mod->getContext()), base_type };
-		return llvm::StructType::get(llvm_mod->getContext(), llvm::makeArrayRef(struct_fields)); // ctx, array, packed (false)
+		return llvm::StructType::get(llvm_mod->getContext(), llvm::makeArrayRef(struct_fields));
 	}
 
 	return base_type;
@@ -345,10 +367,11 @@ llvm::Function* code_gen::code_gen::get_or_declare_function(const std::string& s
 	llvm::GlobalValue::LinkageTypes linkage;
 
 	// TODO: maybe add destructors?
-	// TODO: only one constructor per module?
+	// TODO: only one constructor per module? done i think
 	bool is_constructor = def_stat->attributes.find("constructor") != def_stat->attributes.cend();
 	bool is_extern = dynamic_cast<ir::ast::statement::extern_definition*>(def_stat) != nullptr;
 
+	// TODO: test extern with @export or @constructor :KEKW:
 	// TODO: add type name to function name
 	if ((is_constructor && mod.is_root)
 		|| def_stat->attributes.find("export") != def_stat->attributes.cend())
@@ -377,12 +400,15 @@ llvm::Function* code_gen::code_gen::get_or_declare_function(const std::string& s
 	return function;
 }
 
-code_gen::code_gen::code_gen(std::unordered_map<ir::types::type_descriptor*, llvm::Type*>& type_map, llvm::LLVMContext& context, ir::ast::module& root) :
+code_gen::code_gen::code_gen(std::unordered_map<ir::types::type_descriptor*, llvm::Type*>& type_map, llvm::LLVMContext& context, ir::ast::module& root, const std::string& target_triple) :
 	mod(root),
 	type_map(type_map),
 	llvm_mod(std::make_shared<llvm::Module>(root.relative_path, context)),
 	builder(context)
-{}
+{
+	llvm_mod->setTargetTriple(target_triple);
+	data_layout = std::make_unique<llvm::DataLayout>(llvm_mod.get());
+}
 
 std::shared_ptr<llvm::Module> code_gen::code_gen::gen_code()
 {
